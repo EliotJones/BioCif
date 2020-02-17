@@ -293,6 +293,11 @@ loop_";
                 Assert.Equal(TokenType.Comment, tokens[0].TokenType);
                 Assert.Equal("------------------------------------------------------------------------------", tokens[0].Value);
 
+                foreach (var token in tokens)
+                {
+                    Assert.NotEqual(TokenType.Unknown, token.TokenType);
+                }
+
                 var last = tokens.Last();
                 Assert.Equal(TokenType.Value, last.TokenType);
                 Assert.Equal("1.000", last.Value);
