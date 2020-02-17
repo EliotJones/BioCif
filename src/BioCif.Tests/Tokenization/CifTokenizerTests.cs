@@ -304,6 +304,30 @@ loop_";
             }
         }
 
+        [Fact]
+        public void TokenizesMsp1SubstrateComplexCifFile()
+        {
+            using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("6pdw.cif")))
+            using (var sr = new StreamReader(fs, true))
+            {
+                var tokens = CifTokenizer.Tokenize(sr).ToList();
+
+                Assert.NotEmpty(tokens);
+                Assert.Equal(TokenType.DataBlock, tokens[0].TokenType);
+                Assert.Equal("data_6PDW", tokens[0].Value);
+
+                foreach (var token in tokens)
+                {
+                    Assert.NotEqual(TokenType.Unknown, token.TokenType);
+                }
+
+                var last = tokens.Last();
+                Assert.Equal(TokenType.Comment, last.TokenType);
+                Assert.Equal(" ", last.Value);
+            }
+
+        }
+
         private static IReadOnlyList<Token> StringToTokens(string input, Version version = Version.Version2)
         {
             using (var reader = StringToStreamReader(input))
