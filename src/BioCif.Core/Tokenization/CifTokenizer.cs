@@ -50,7 +50,7 @@
                 return false;
             }
 
-            if (IsEndline(val))
+            if (IsEndline(val) || IsWhitespace(val))
             {
                 do
                 {
@@ -60,34 +60,103 @@
                     {
                         return false;
                     }
-                } while (IsEndline(val));
+                } while (IsEndline(val) || IsWhitespace(val));
             }
 
-            var ctx = GetTokenContext(val);
+            var ctx = GetTokenContext(val, sb);
 
             if (ctx == Context.Unknown)
             {
                 return false;
             }
 
-            var last = -1;
+            var previousPrevious = -1;
+            var previous = -1;
             while ((val = sr.Read()) >= 0)
             {
                 if (IsEndline(val))
                 {
                     if (ctx != Context.ReadingTextField)
                     {
+                        type = GetTokenType(ctx, sb);
 
+                        return true;
+                    }
+
+                    sb.Append((char) val);
+                }
+                else if (IsWhitespace(val))
+                {
+                    switch (ctx)
+                    {
+                        case Context.ReadingSimpleValue:
+                        case Context.ReadingName:
+                        case Context.Unknown:
+                            type = GetTokenType(ctx, sb);
+
+                            return true;
+                        default:
+                            sb.Append((char) val);
+                            break;
                     }
                 }
+                else if (ctx == Context.ReadingNonSimpleValueSingleQuote
+                         && val == '\''
+                         && IsWhitespaceOrEnd(sr.Peek()))
+                {
+                    type = GetTokenType(ctx, sb);
+
+                    return true;
+                }
+                else if (ctx == Context.ReadingNonSimpleValueDoubleQuote
+                         && val == '"')
+                {
+                    type = GetTokenType(ctx, sb);
+
+                    return true;
+                }
+                else if (ctx == Context.ReadingTextField
+                         && val == ';'
+                         && IsEndline(previous))
+                {
+                    // Remove the incorrectly included endline characters.
+                    if (previousPrevious == '\r' && previous == '\n')
+                    {
+                        sb.Remove(sb.Length - 2, 2);
+                    }
+                    else
+                    {
+                        sb.Remove(sb.Length - 1, 1);
+                    }
+
+                    type = GetTokenType(ctx, sb);
+
+                    return true;
+                }
+                else
+                {
+                    sb.Append((char) val);
+                }
+
+                previousPrevious = previous;
+                previous = val;
+            }
+
+            if (ctx != Context.Unknown)
+            {
+                type = GetTokenType(ctx, sb);
+
+                return true;
             }
 
             return false;
         }
 
         private static bool IsEndline(int val) => val == '\r' || val == '\n';
+        private static bool IsWhitespace(int val) => val == ' ' || val == '\t';
+        private static bool IsWhitespaceOrEnd(int val) => val < 0 || IsWhitespace(val);
 
-        private static Context GetTokenContext(int val)
+        private static Context GetTokenContext(int val, StringBuilder sb)
         {
             Context ctx;
             switch (val)
@@ -109,6 +178,7 @@
                     break;
                 default:
                     ctx = Context.ReadingSimpleValue;
+                    sb.Append((char) val);
                     break;
             }
 
@@ -162,6 +232,7 @@
                     return TokenType.Name;
                 case Context.ReadingNonSimpleValueSingleQuote:
                 case Context.ReadingNonSimpleValueDoubleQuote:
+                case Context.ReadingTextField:
                     return TokenType.Value;
                 case Context.Unknown:
                 default:
