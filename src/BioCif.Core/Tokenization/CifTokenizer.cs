@@ -30,7 +30,7 @@
         {
             var sb = new StringBuilder();
 
-            var scopes = new Stack<ActiveScope>(new []{ ActiveScope.BlockOrFrame });
+            var scopes = new Stack<ActiveScope>(new[] { ActiveScope.BlockOrFrame });
 
             while (Read(streamReader, sb, version, scopes.Peek(), out var tokenType, out var completeScope))
             {
@@ -97,6 +97,16 @@
             if (val < 0)
             {
                 return false;
+            }
+
+            if (val == ':' && scope == ActiveScope.Table)
+            {
+                val = sr.Read();
+
+                if (val < 0)
+                {
+                    return false;
+                }
             }
 
             if (IsEndline(val) || IsWhitespace(val))
@@ -191,7 +201,7 @@
                 }
                 else if (ctx == Context.ReadingNonSimpleValueSingleQuote
                          && val == '\''
-                         && IsWhitespaceOrEnd(sr.Peek()))
+                         && (IsWhitespaceOrEndFileOrLine(sr.Peek()) || (scope == ActiveScope.Table && sr.Peek() == ':')))
                 {
                     type = GetTokenType(ctx, sb);
 
@@ -219,7 +229,7 @@
                 }
                 else if (ctx == Context.ReadingNonSimpleValueDoubleQuote
                          && val == '"'
-                         && IsWhitespaceOrEnd(sr.Peek()))
+                         && (IsWhitespaceOrEndFileOrLine(sr.Peek()) || (scope == ActiveScope.Table && sr.Peek() == ':')))
                 {
                     type = GetTokenType(ctx, sb);
 
@@ -285,9 +295,9 @@
         /// </summary>
         private static bool IsWhitespace(int val) => val == ' ' || val == '\t';
         /// <summary>
-        /// Checks if the character is whitespace or the end of the file.
+        /// Checks if the character is whitespace, end-of-line or the end of the file.
         /// </summary>
-        private static bool IsWhitespaceOrEnd(int val) => val < 0 || IsWhitespace(val);
+        private static bool IsWhitespaceOrEndFileOrLine(int val) => val < 0 || IsWhitespace(val) || IsEndline(val);
 
         private static Context GetTokenContext(int val, StringBuilder sb, Version version)
         {

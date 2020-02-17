@@ -251,6 +251,37 @@ x,y,z";
         }
 
         [Fact]
+        public void TableFromVersion2Specification()
+        {
+            const string input = @"_my_table {""symm"":""P 4n 2 3 -1n""
+'avec':[10.3 0.0 0.0]
+'bvec':[0.0 10.3 0.0]
+'cvec':[0.0 0.0 10.3]
+""description"":
+'''Cubic space group
+
+and metric cell vectors'''}
+loop_";
+
+            var tokens = StringToTokens(input);
+
+            Assert.Equal(26, tokens.Count);
+
+            Assert.Equal(new[]
+            {
+                "my_table",
+                "{",
+                "symm", "P 4n 2 3 -1n",
+                "avec", "[", "10.3", "0.0", "0.0", "]",
+                "bvec", "[", "0.0", "10.3", "0.0", "]",
+                "cvec", "[", "0.0", "0.0", "10.3", "]",
+                "description", "Cubic space group\r\n\r\nand metric cell vectors",
+                "}",
+                "loop_"
+            }, tokens.Select(x => x.Value));
+        }
+
+        [Fact]
         public void TokenizesVanadiumHypophosphiteCifFile()
         {
             using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("1000118.cif")))
