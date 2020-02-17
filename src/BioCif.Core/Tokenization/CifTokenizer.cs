@@ -1,9 +1,11 @@
 ﻿namespace BioCif.Core.Tokenization
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Text;
     using Tokens;
+    using Version = Core.Version;
 
     public static class CifTokenizer
     {
@@ -12,15 +14,19 @@
         private const int Semicolon = ';';
         private const int SingleQuote = '\'';
         private const int DoubleQuote = '"';
+        private const int OpenSquareBracket = '[';
+        private const int CloseSquareBracket = ']';
+        private const int OpenCurlyBracket = '{';
+        private const int CloseCurlyBracket = '}';
 
         private static readonly Token LoopToken = new Token(TokenType.Loop, "loop_");
         private static readonly Token SaveEndToken = new Token(TokenType.SaveFrameEnd, "save_");
 
-        public static IEnumerable<Token> Tokenize(StreamReader streamReader)
+        public static IEnumerable<Token> Tokenize(StreamReader streamReader, Version version = Version.Version2)
         {
             var sb = new StringBuilder();
 
-            while (Read(streamReader, sb, out var tokenType))
+            while (Read(streamReader, sb, version, out var tokenType))
             {
                 if (tokenType == TokenType.Loop)
                 {
@@ -39,7 +45,7 @@
             }
         }
 
-        private static bool Read(StreamReader sr, StringBuilder sb, out TokenType type)
+        private static bool Read(StreamReader sr, StringBuilder sb, Version version, out TokenType type)
         {
             type = TokenType.Unknown;
 
@@ -63,7 +69,7 @@
                 } while (IsEndline(val) || IsWhitespace(val));
             }
 
-            var ctx = GetTokenContext(val, sb);
+            var ctx = GetTokenContext(val, sb, version);
 
             if (ctx == Context.Unknown)
             {
@@ -83,7 +89,7 @@
                         return true;
                     }
 
-                    sb.Append((char) val);
+                    sb.Append((char)val);
                 }
                 else if (IsWhitespace(val))
                 {
@@ -96,7 +102,7 @@
 
                             return true;
                         default:
-                            sb.Append((char) val);
+                            sb.Append((char)val);
                             break;
                     }
                 }
@@ -135,7 +141,7 @@
                 }
                 else
                 {
-                    sb.Append((char) val);
+                    sb.Append((char)val);
                 }
 
                 previousPrevious = previous;
@@ -152,11 +158,23 @@
             return false;
         }
 
+        /// <summary>
+        /// For end-of-line, CIF recognises three distinct character sequences: 
+        /// (1) a line feed (U+000A) not immediately preceded by a carriage return (U+000D).
+        /// (2) a carriage return not immediately followed by a line feed.
+        /// (3) a carriage-return/line-feed pair. 
+        /// </summary>
         private static bool IsEndline(int val) => val == '\r' || val == '\n';
+        /// <summary>
+        /// The horizontal tab character (U+0009) and the space character (U+0020) alone are recognized as in-line whitespace characters.
+        /// </summary>
         private static bool IsWhitespace(int val) => val == ' ' || val == '\t';
+        /// <summary>
+        /// Checks if the character is whitespace or the end of the file.
+        /// </summary>
         private static bool IsWhitespaceOrEnd(int val) => val < 0 || IsWhitespace(val);
 
-        private static Context GetTokenContext(int val, StringBuilder sb)
+        private static Context GetTokenContext(int val, StringBuilder sb, Version version)
         {
             Context ctx;
             switch (val)
@@ -176,9 +194,18 @@
                 case DoubleQuote:
                     ctx = Context.ReadingNonSimpleValueDoubleQuote;
                     break;
+                case OpenSquareBracket:
+                {
+                    if (version == Version.Version1_1)
+                    {
+                        throw new InvalidOperationException("Encountered a square bracket '[' at the start of a name or value when parsing CIF version 1 or 1.1.");
+                    }
+                    ctx = Context.OpenList;
+                    break;
+                }
                 default:
                     ctx = Context.ReadingSimpleValue;
-                    sb.Append((char) val);
+                    sb.Append((char)val);
                     break;
             }
 
@@ -272,6 +299,12 @@
             ReadingTextField = 4,
             ReadingNonSimpleValueSingleQuote = 5,
             ReadingNonSimpleValueDoubleQuote = 6,
+            ReadingNonSimpleValueTripleSingleQuoteCif2 = 7,
+            ReadingNonSimpleValueTripleDoubleQuoteCif2 = 8,
+            OpenList = 9,
+            CloseList = 10,
+            OpenTable = 11,
+            CloseTable = 12,
         }
     }
 }
