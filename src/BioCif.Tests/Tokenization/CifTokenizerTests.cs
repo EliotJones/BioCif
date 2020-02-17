@@ -1,6 +1,7 @@
 ﻿namespace BioCif.Tests.Tokenization
 {
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using Core.Tokenization;
     using Core.Tokenization.Tokens;
@@ -138,6 +139,24 @@ x,y,z";
                 "item_units.code", "8pi2_angstroms_squared",
                 "save_"
             }, tokens.Select(x => x.Value));
+        }
+
+        [Fact]
+        public void TokenizesVanadiumHypophosphiteCifFile()
+        {
+            using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("1000118.cif")))
+            using (var sr = new StreamReader(fs, true))
+            {
+                var tokens = CifTokenizer.Tokenize(sr).ToList();
+
+                Assert.NotEmpty(tokens);
+                Assert.Equal(TokenType.Comment, tokens[0].TokenType);
+                Assert.Equal("------------------------------------------------------------------------------", tokens[0].Value);
+
+                var last = tokens.Last();
+                Assert.Equal(TokenType.Value, last.TokenType);
+                Assert.Equal("1.000", last.Value);
+            }
         }
 
         private static IReadOnlyList<Token> StringToTokens(string input)
