@@ -251,6 +251,28 @@ x,y,z";
         }
 
         [Fact]
+        public void ListWithSingleQuotedItemAtEnd()
+        {
+            const string input = @"[one two 'three, yes']";
+
+            var tokens = StringToTokens(input);
+
+            Assert.Equal(5, tokens.Count);
+            Assert.Equal(new[]{ "[", "one", "two", "three, yes", "]" }, tokens.Select(x => x.Value));
+        }
+
+        [Fact]
+        public void ListWithDoubleQuotedItemAtEnd()
+        {
+            const string input = @"[one two ""three""]";
+
+            var tokens = StringToTokens(input);
+
+            Assert.Equal(5, tokens.Count);
+            Assert.Equal(new[] { "[", "one", "two", "three", "]" }, tokens.Select(x => x.Value));
+        }
+
+        [Fact]
         public void TableFromVersion2Specification()
         {
             const string input = @"_my_table {""symm"":""P 4n 2 3 -1n""
@@ -325,7 +347,6 @@ loop_";
                 Assert.Equal(TokenType.Comment, last.TokenType);
                 Assert.Equal(" ", last.Value);
             }
-
         }
 
         private static IReadOnlyList<Token> StringToTokens(string input, Version version = Version.Version2)

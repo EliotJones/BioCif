@@ -207,6 +207,15 @@
 
                     return true;
                 }
+                else if (ctx == Context.ReadingNonSimpleValueSingleQuote
+                         && val == '\''
+                         && scope == ActiveScope.List
+                         && sr.Peek() == ']')
+                {
+                    type = GetTokenType(ctx, sb);
+
+                    return true;
+                }
                 else if (ctx == Context.ReadingNonSimpleValueTripleSingleQuoteCif2
                          && previousPrevious == '\''
                          && previous == '\''
@@ -230,6 +239,15 @@
                 else if (ctx == Context.ReadingNonSimpleValueDoubleQuote
                          && val == '"'
                          && (IsWhitespaceOrEndFileOrLine(sr.Peek()) || (scope == ActiveScope.Table && sr.Peek() == ':')))
+                {
+                    type = GetTokenType(ctx, sb);
+
+                    return true;
+                }
+                else if (ctx == Context.ReadingNonSimpleValueDoubleQuote
+                         && val == '"'
+                         && scope == ActiveScope.List
+                         && sr.Peek() == ']')
                 {
                     type = GetTokenType(ctx, sb);
 

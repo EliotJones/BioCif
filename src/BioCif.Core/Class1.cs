@@ -2,8 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
-    using System.Text;
 
     /// <summary>
     /// A file in the Crystallographic Information File format, the standard for information interchange in crystallography.
@@ -11,62 +9,21 @@
     /// </summary>
     public class Cif
     {
+        public DataBlock FirstBlock => DataBlocks.Count > 0 ? DataBlocks[0] : null;
 
-    }
+        public IReadOnlyList<DataBlock> DataBlocks { get; }
 
-    public static class CifParser
-    {
-        public static Cif Parse(Stream stream, CifParsingOptions options)
+        public Cif(IReadOnlyList<DataBlock> dataBlocks)
         {
-            if (stream == null)
-            {
-                throw new ArgumentNullException(nameof(stream));
-            }
-
-            ValidateStream(stream);
-
-            if (options == null)
-            {
-                options = new CifParsingOptions();
-            }
-            else if (options.FileEncoding == null)
-            {
-                options.FileEncoding = Encoding.UTF8;
-            }
-
-            var buffered = new BufferedStream(stream);
-            using (var reader = new StreamReader(buffered, options.FileEncoding))
-            {
-                
-            }
-
-            return null;
+            DataBlocks = dataBlocks ?? throw new ArgumentNullException(nameof(dataBlocks));
         }
-
-        private static void ValidateStream(Stream stream)
-        {
-            if (!stream.CanRead)
-            {
-                throw new ArgumentException($"Could not read from the provided stream of type {stream.GetType().FullName}.");
-            }
-
-            if (!stream.CanSeek)
-            {
-                throw new ArgumentException($"Could not seek in provided stream of type {stream.GetType().FullName}.");
-            }
-        }
-    }
-
-    public class CifParsingOptions
-    {
-        public Encoding FileEncoding { get; set; } = Encoding.UTF8;
     }
 
     /// <summary>
     /// A partitioned collection of <see cref="DataItem"/>s within a <see cref="DataBlock"/>.
     /// Only valid in a dictionary file.
     /// </summary>
-    public class SaveFrame
+    public class SaveFrame : IDataBlockMember
     {
         /// <summary>
         /// The name of this frame.
@@ -76,43 +33,20 @@
 
     public class Table : IDataBlockMember
     {
-        public IReadOnlyList<DataName> Headers { get; set; }
+        public IReadOnlyList<DataName> Headers { get; }
 
+        public IReadOnlyList<TableRow> Rows { get; }
 
+        public Table(IReadOnlyList<DataName> headers, IReadOnlyList<TableRow> rows)
+        {
+            Headers = headers;
+            Rows = rows;
+        }
     }
 
     public class TableRow
     {
-        public IReadOnlyList<DataValue> Values { get; set; }
-    }
-
-    public class DataName
-    {
-        /// <summary>
-        /// Identifier of the content of an associated <see cref="DataValue"/>. 
-        /// </summary>
-        public string Tag { get; set; }
-    }
-
-    public class DataValue
-    {
-
-    }
-
-    public class DataItem : IDataBlockMember
-    {
-        public DataName Name { get; set; }
-
-        public DataValue Value { get; set; }
-    }
-
-    public class DataBlock
-    {
-        public IReadOnlyList<IDataBlockMember> Contents { get; set; }
-    }
-
-    public interface IDataBlockMember
-    {
-
+        public IDataValue this[int i] => Values[i];
+        public IReadOnlyList<IDataValue> Values { get; set; }
     }
 }

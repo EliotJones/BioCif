@@ -6,6 +6,8 @@
 
     public static class TestHelpers
     {
+        public static Stream StringToStream(string value) => new MemoryStream(Encoding.Unicode.GetBytes(value));
+
         public static StreamReader StringToStreamReader(string value)
         {
             var memStream = new MemoryStream(Encoding.Unicode.GetBytes(value));
