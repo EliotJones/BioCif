@@ -5,7 +5,7 @@
     using System.IO;
     using System.Text;
     using Tokens;
-    using Version = Core.Version;
+    using Version = Version;
 
     public static class CifTokenizer
     {
@@ -21,12 +21,18 @@
 
         private static readonly Token LoopToken = new Token(TokenType.Loop, "loop_");
         private static readonly Token SaveEndToken = new Token(TokenType.SaveFrameEnd, "save_");
+        private static readonly Token StartListToken = new Token(TokenType.StartList, "[");
+        private static readonly Token EndListToken = new Token(TokenType.EndList, "]");
+        private static readonly Token StartTableToken = new Token(TokenType.StartTable, "{");
+        private static readonly Token EndTableToken = new Token(TokenType.EndTable, "}");
 
         public static IEnumerable<Token> Tokenize(StreamReader streamReader, Version version = Version.Version2)
         {
             var sb = new StringBuilder();
 
-            while (Read(streamReader, sb, version, out var tokenType))
+            var scopes = new Stack<ActiveScope>(new []{ ActiveScope.BlockOrFrame });
+
+            while (Read(streamReader, sb, version, scopes.Peek(), out var tokenType, out var completeScope))
             {
                 if (tokenType == TokenType.Loop)
                 {
@@ -36,17 +42,54 @@
                 {
                     yield return SaveEndToken;
                 }
+                else if (tokenType == TokenType.StartList)
+                {
+                    yield return StartListToken;
+                    scopes.Push(ActiveScope.List);
+                }
+                else if (tokenType == TokenType.EndList)
+                {
+                    yield return EndListToken;
+                    scopes.Pop();
+                }
+                else if (tokenType == TokenType.StartTable)
+                {
+                    yield return StartTableToken;
+                    scopes.Push(ActiveScope.Table);
+                }
+                else if (tokenType == TokenType.EndTable)
+                {
+                    yield return EndTableToken;
+                    scopes.Pop();
+                }
                 else
                 {
                     yield return new Token(tokenType, sb.ToString());
+
+                    if (completeScope)
+                    {
+                        var completed = scopes.Pop();
+
+                        switch (completed)
+                        {
+                            case ActiveScope.List:
+                                yield return EndListToken;
+                                break;
+                            case ActiveScope.Table:
+                                yield return EndTableToken;
+                                break;
+                        }
+                    }
                 }
 
                 sb.Clear();
             }
         }
 
-        private static bool Read(StreamReader sr, StringBuilder sb, Version version, out TokenType type)
+        private static bool Read(StreamReader sr, StringBuilder sb, Version version, ActiveScope scope, out TokenType type,
+            out bool completeScope)
         {
+            completeScope = false;
             type = TokenType.Unknown;
 
             var val = sr.Read();
@@ -71,18 +114,49 @@
 
             var ctx = GetTokenContext(val, sb, version);
 
-            if (ctx == Context.Unknown)
+            switch (ctx)
             {
-                return false;
+                case Context.Unknown:
+                    return false;
+                case Context.OpenList:
+                    type = TokenType.StartList;
+                    return true;
+                case Context.CloseList:
+                    type = TokenType.EndList;
+                    return true;
+                case Context.OpenTable:
+                    type = TokenType.StartTable;
+                    return true;
+                case Context.CloseTable:
+                    type = TokenType.EndTable;
+                    return true;
             }
 
             var previousPrevious = -1;
-            var previous = -1;
+            var previous = val;
             while ((val = sr.Read()) >= 0)
             {
+                if (val == CloseSquareBracket && scope == ActiveScope.List)
+                {
+                    completeScope = true;
+
+                    type = GetTokenType(ctx, sb);
+
+                    return true;
+                }
+
+                if (val == CloseCurlyBracket && scope == ActiveScope.Table)
+                {
+                    completeScope = true;
+                    type = GetTokenType(ctx, sb);
+                    return true;
+                }
+
                 if (IsEndline(val))
                 {
-                    if (ctx != Context.ReadingTextField)
+                    if (ctx != Context.ReadingTextField
+                        && ctx != Context.ReadingNonSimpleValueTripleSingleQuoteCif2
+                        && ctx != Context.ReadingNonSimpleValueTripleDoubleQuoteCif2)
                     {
                         type = GetTokenType(ctx, sb);
 
@@ -107,6 +181,15 @@
                     }
                 }
                 else if (ctx == Context.ReadingNonSimpleValueSingleQuote
+                         && version == Version.Version2
+                         && previousPrevious == '\''
+                         && previous == '\''
+                         && val == '\'')
+                {
+                    sb.Clear();
+                    ctx = Context.ReadingNonSimpleValueTripleSingleQuoteCif2;
+                }
+                else if (ctx == Context.ReadingNonSimpleValueSingleQuote
                          && val == '\''
                          && IsWhitespaceOrEnd(sr.Peek()))
                 {
@@ -114,9 +197,41 @@
 
                     return true;
                 }
+                else if (ctx == Context.ReadingNonSimpleValueTripleSingleQuoteCif2
+                         && previousPrevious == '\''
+                         && previous == '\''
+                         && val == '\'')
+                {
+                    sb.Remove(sb.Length - 2, 2);
+
+                    type = GetTokenType(ctx, sb);
+
+                    return true;
+                }
                 else if (ctx == Context.ReadingNonSimpleValueDoubleQuote
+                         && version == Version.Version2
+                         && previousPrevious == '"'
+                         && previous == '"'
                          && val == '"')
                 {
+                    sb.Clear();
+                    ctx = Context.ReadingNonSimpleValueTripleDoubleQuoteCif2;
+                }
+                else if (ctx == Context.ReadingNonSimpleValueDoubleQuote
+                         && val == '"'
+                         && IsWhitespaceOrEnd(sr.Peek()))
+                {
+                    type = GetTokenType(ctx, sb);
+
+                    return true;
+                }
+                else if (ctx == Context.ReadingNonSimpleValueTripleDoubleQuoteCif2
+                         && previousPrevious == '"'
+                         && previous == '"'
+                         && val == '"')
+                {
+                    sb.Remove(sb.Length - 2, 2);
+
                     type = GetTokenType(ctx, sb);
 
                     return true;
@@ -195,14 +310,29 @@
                     ctx = Context.ReadingNonSimpleValueDoubleQuote;
                     break;
                 case OpenSquareBracket:
-                {
-                    if (version == Version.Version1_1)
                     {
-                        throw new InvalidOperationException("Encountered a square bracket '[' at the start of a name or value when parsing CIF version 1 or 1.1.");
+                        if (version == Version.Version1_1)
+                        {
+                            throw new InvalidOperationException("Encountered a square bracket '[' at the start of a name or value when parsing CIF version 1 or 1.1.");
+                        }
+                        ctx = Context.OpenList;
+                        break;
                     }
-                    ctx = Context.OpenList;
+                case OpenCurlyBracket:
+                    {
+                        if (version == Version.Version1_1)
+                        {
+                            throw new InvalidOperationException("Encountered a curly bracket '{' at the start of a name or value when parsing CIF version 1 or 1.1.");
+                        }
+                        ctx = Context.OpenTable;
+                        break;
+                    }
+                case CloseSquareBracket:
+                    ctx = Context.CloseList;
                     break;
-                }
+                case CloseCurlyBracket:
+                    ctx = Context.CloseTable;
+                    break;
                 default:
                     ctx = Context.ReadingSimpleValue;
                     sb.Append((char)val);
@@ -258,7 +388,9 @@
                 case Context.ReadingName:
                     return TokenType.Name;
                 case Context.ReadingNonSimpleValueSingleQuote:
+                case Context.ReadingNonSimpleValueTripleSingleQuoteCif2:
                 case Context.ReadingNonSimpleValueDoubleQuote:
+                case Context.ReadingNonSimpleValueTripleDoubleQuoteCif2:
                 case Context.ReadingTextField:
                     return TokenType.Value;
                 case Context.Unknown:
@@ -305,6 +437,13 @@
             CloseList = 10,
             OpenTable = 11,
             CloseTable = 12,
+        }
+
+        private enum ActiveScope
+        {
+            BlockOrFrame = 0,
+            List = 1,
+            Table = 2
         }
     }
 }

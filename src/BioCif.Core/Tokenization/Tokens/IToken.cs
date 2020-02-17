@@ -28,5 +28,9 @@
         SaveFrameEnd = 5,
         Loop = 6,
         Comment = 7,
+        StartList = 8,
+        EndList = 9,
+        StartTable = 10,
+        EndTable = 11,
     }
 }

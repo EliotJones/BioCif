@@ -3,6 +3,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using Core;
     using Core.Tokenization;
     using Core.Tokenization.Tokens;
     using Xunit;
@@ -142,6 +143,114 @@ x,y,z";
         }
 
         [Fact]
+        public void SimpleListInput()
+        {
+            const string input = @"_refln.hklFoFc [[1 3 -4] 23.32(9) 22.97(11)]";
+
+            var tokens = StringToTokens(input);
+
+            Assert.Equal(10, tokens.Count);
+            Assert.Equal(new[]
+            {
+                TokenType.Name,
+                TokenType.StartList,
+                    TokenType.StartList, TokenType.Value, TokenType.Value, TokenType.Value, TokenType.EndList,
+                    TokenType.Value,
+                    TokenType.Value,
+                TokenType.EndList
+            }, tokens.Select(x => x.TokenType));
+
+            Assert.Equal(new[]
+            {
+                "refln.hklFoFc",
+                "[", "[", "1", "3", "-4", "]",
+                "23.32(9)", "22.97(11)",
+                "]"
+            }, tokens.Select(x => x.Value));
+        }
+
+        [Fact]
+        public void SimpleTripleDoubleQuotedInput()
+        {
+            const string input = "\"\"\"Cubic space group\"\"\"";
+
+            var tokens = StringToTokens(input);
+
+            Assert.Single(tokens);
+
+            Assert.Equal(TokenType.Value, tokens[0].TokenType);
+            Assert.Equal("Cubic space group", tokens[0].Value);
+        }
+
+        [Fact]
+        public void SimpleTripleDoubleQuotedInputVersion1()
+        {
+            const string input = "\"\"\"Cubic space group\"\"\"";
+
+            var tokens = StringToTokens(input, Version.Version1_1);
+
+            Assert.Single(tokens);
+
+            Assert.Equal(TokenType.Value, tokens[0].TokenType);
+            Assert.Equal("\"\"Cubic space group\"\"", tokens[0].Value);
+        }
+
+        [Fact]
+        public void MultiLineTripleDoubleQuotedWithQuotesInput()
+        {
+            const string input = "\"\"\"Text\rwith \"three\" lines\rand \"\" double quotes\"\"\"";
+
+            var tokens = StringToTokens(input);
+
+            Assert.Single(tokens);
+
+            Assert.Equal(TokenType.Value, tokens[0].TokenType);
+            Assert.Equal("Text\rwith \"three\" lines\rand \"\" double quotes", tokens[0].Value);
+        }
+
+        [Fact]
+        public void SimpleTripleSingleQuotedInput()
+        {
+            const string input = "'''Unknown space group'''";
+
+            var tokens = StringToTokens(input);
+
+            Assert.Single(tokens);
+
+            Assert.Equal(TokenType.Value, tokens[0].TokenType);
+            Assert.Equal("Unknown space group", tokens[0].Value);
+        }
+
+        [Fact]
+        public void SimpleTripleSingleQuotedInputVersion1()
+        {
+            const string input = "'''Unknown space group'''";
+
+            var tokens = StringToTokens(input, Version.Version1_1);
+
+            Assert.Single(tokens);
+
+            Assert.Equal(TokenType.Value, tokens[0].TokenType);
+            Assert.Equal("''Unknown space group''", tokens[0].Value);
+        }
+
+        [Fact]
+        public void MultiLineTripleSingleQuotedWithQuotesInput()
+        {
+            const string input = "''' A three 'line' input\r\n''with quotes inside''\r\nthat's it''' new_token";
+
+            var tokens = StringToTokens(input);
+
+            Assert.Equal(2, tokens.Count);
+
+            Assert.Equal(TokenType.Value, tokens[0].TokenType);
+            Assert.Equal(" A three 'line' input\r\n''with quotes inside''\r\nthat's it", tokens[0].Value);
+
+            Assert.Equal(TokenType.Value, tokens[1].TokenType);
+            Assert.Equal("new_token", tokens[1].Value);
+        }
+
+        [Fact]
         public void TokenizesVanadiumHypophosphiteCifFile()
         {
             using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("1000118.cif")))
@@ -159,11 +268,11 @@ x,y,z";
             }
         }
 
-        private static IReadOnlyList<Token> StringToTokens(string input)
+        private static IReadOnlyList<Token> StringToTokens(string input, Version version = Version.Version2)
         {
             using (var reader = StringToStreamReader(input))
             {
-                return CifTokenizer.Tokenize(reader).ToList();
+                return CifTokenizer.Tokenize(reader, version).ToList();
             }
         }
     }
