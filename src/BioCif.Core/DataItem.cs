@@ -1,14 +1,26 @@
 ﻿namespace BioCif.Core
 {
     using System;
-    using System.Collections.Generic;
 
+    /// <inheritdoc />
+    /// <summary>
+    /// A field name with its associated value.
+    /// </summary>
     public class DataItem : IDataBlockMember
     {
+        /// <summary>
+        /// The name of the field.
+        /// </summary>
         public DataName Name { get; }
 
+        /// <summary>
+        /// The value of the field.
+        /// </summary>
         public IDataValue Value { get; }
 
+        /// <summary>
+        /// Create a new <see cref="DataItem"/>.
+        /// </summary>
         public DataItem(DataName name, IDataValue value)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -17,25 +29,5 @@
 
         /// <inheritdoc />
         public override string ToString() => $"{Name}: {Value}";
-    }
-
-    public interface IDataValue
-    {
-
-    }
-
-    public class DataDictionary : IDataValue
-    {
-
-    }
-
-    public class DataList : IDataValue
-    {
-        public IReadOnlyList<IDataValue> Values { get; }
-
-        public DataList(IReadOnlyList<IDataValue> values)
-        {
-            Values = values;
-        }
     }
 }

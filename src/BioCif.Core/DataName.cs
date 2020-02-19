@@ -8,7 +8,7 @@
     public class DataName
     {
         /// <summary>
-        /// Identifier of the content of an associated <see cref="DataValue"/>. 
+        /// Identifier of the content of an associated <see cref="DataValueSimple"/>. 
         /// </summary>
         public string Tag { get; }
 

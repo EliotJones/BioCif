@@ -2,11 +2,15 @@
 {
     using System;
 
+    /// <inheritdoc />
     /// <summary>
-    /// A value in a CIF file.
+    /// A simple <see langword="string" /> value in a CIF file.
     /// </summary>
-    public class DataValue : IDataValue
+    public class DataValueSimple : IDataValue
     {
+        /// <inheritdoc />
+        public DataValueType DataType { get; } = DataValueType.Simple;
+
         /// <summary>
         /// The raw <see langword="string"/> value from the file. 
         /// </summary>
@@ -18,16 +22,16 @@
         public bool IsNullSymbol { get; }
 
         /// <summary>
-        /// Create a new <see cref="DataValue"/>.
+        /// Create a new <see cref="DataValueSimple"/>.
         /// </summary>
-        public DataValue(string value)
+        public DataValueSimple(string value)
         {
             Value = value ?? throw new ArgumentNullException(nameof(value));
             IsNullSymbol = value == "?";
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj) => obj is DataValue value && Value == value.Value;
+        public override bool Equals(object obj) => obj is DataValueSimple value && Value == value.Value;
 
         /// <inheritdoc />
         public override int GetHashCode() => Value.GetHashCode();
@@ -38,6 +42,6 @@
         /// <summary>
         /// Implictly convert to a <see langword="string" />
         /// </summary>
-        public static implicit operator string(DataValue value) => value.Value;
+        public static implicit operator string(DataValueSimple value) => value.Value;
     }
 }

@@ -25,11 +25,11 @@ _journal_page_first              2607";
 
             Assert.Equal("anything", block.Name);
 
-            Assert.Equal(3, block.Contents.Count);
+            Assert.Equal(3, block.Count);
 
-            AssertSimpleItem("journal_coden_ASTM", "INOCAJ", block.Contents[0]);
-            AssertSimpleItem("journal_name_full", "Inorganic Chemistry", block.Contents[1]);
-            AssertSimpleItem("journal_page_first", "2607", block.Contents[2]);
+            AssertSimpleItem("journal_coden_ASTM", "INOCAJ", block[0]);
+            AssertSimpleItem("journal_name_full", "Inorganic Chemistry", block[1]);
+            AssertSimpleItem("journal_page_first", "2607", block[2]);
         }
 
         [Fact]
@@ -51,12 +51,12 @@ _publ_author_name
 
             Assert.NotNull(block);
 
-            var content = Assert.Single(block.Contents);
+            var content = Assert.Single(block);
 
             var loop = Assert.IsType<Table>(content);
 
             Assert.Equal(new[]{ "publ_author_name" }, loop.Headers.Select(x => x.Tag));
-            Assert.Equal(new[] { "Le Bail, A", "Marcos, M D", "Amoros, P" }, loop.Rows.Select(x => ((DataValue)x[0]).Value));
+            Assert.Equal(new[] { "Le Bail, A", "Marcos, M D", "Amoros, P" }, loop.Rows.Select(x => ((DataValueSimple)x[0]).Value));
         }
 
         [Fact]
@@ -77,14 +77,14 @@ _other 'angry penguins'";
             var block1 = cif.DataBlocks[0];
             
             Assert.Equal("a", block1.Name);
-            AssertSimpleItem("my_data", "10.678", block1.Contents[0]);
-            AssertSimpleItem("other", "happy feet", block1.Contents[1]);
+            AssertSimpleItem("my_data", "10.678", block1[0]);
+            AssertSimpleItem("other", "happy feet", block1[1]);
                 
             var block2 = cif.DataBlocks[1];
 
             Assert.Equal("b", block2.Name);
-            AssertSimpleItem("my_Data", "12.765", block2.Contents[0]);
-            AssertSimpleItem("other", "angry penguins", block2.Contents[1]);
+            AssertSimpleItem("my_Data", "12.765", block2[0]);
+            AssertSimpleItem("other", "angry penguins", block2[1]);
         }
 
         [Fact]
@@ -103,13 +103,60 @@ _count 3";
 
             Assert.Equal("clown", block.Name);
 
-            var list = (DataItem) block.Contents[0];
+            var list = (DataItem) block[0];
             Assert.Equal("clown_names", list.Name);
             var val = Assert.IsType<DataList>(list.Value);
             Assert.NotNull(val);
-            Assert.Equal(new[]{ "larry", "gary", "barry, also" }, val.Values.Select(x => ((DataValue)x).Value));
+            Assert.Equal(new[]{ "larry", "gary", "barry, also" }, val.Select(x => ((DataValueSimple)x).Value));
 
-            AssertSimpleItem("count", "3", block.Contents[1]);
+            AssertSimpleItem("count", "3", block[1]);
+        }
+
+        [Fact]
+        public void SimpleBlockContainingNestedList()
+        {
+            const string input = @"data_a
+_clown_names ['mr giggles' [brian happy]]";
+
+            var cif = Parse(input);
+
+            var block = Assert.Single(cif.DataBlocks);
+
+            Assert.NotNull(block);
+            Assert.Equal("a", block.Name);
+            var item = (DataItem) block[0];
+            Assert.Equal("clown_names", item.Name);
+            var list = (DataList) item.Value;
+
+            AssertValue("mr giggles", list[0]);
+
+            var inner = Assert.IsType<DataList>(list[1]);
+
+            Assert.Equal(2, inner.Count);
+
+            AssertValue("brian", inner[0]);
+            AssertValue("happy", inner[1]);
+        }
+
+        [Fact]
+        public void SimpleBlockContainingDictionaryAndList()
+        {
+            const string input = @"
+data_one
+_dict { 
+    'count': 1
+    ""vectors"": [1 0 0.67 [0 1 0.5] -1]
+    'name': ''' any'''
+}
+_list [3 5 7]
+_simple simple_value";
+
+            var cif = Parse(input);
+
+            var block = Assert.Single(cif.DataBlocks);
+            Assert.NotNull(block);
+
+            Assert.Equal(3, block.Count);
         }
 
         private static Cif Parse(string input)
@@ -132,10 +179,15 @@ _count 3";
 
             Assert.Equal(name, simple.Name);
 
-            var val = Assert.IsType<DataValue>(simple.Value);
+            AssertValue(value, simple.Value);
+        }
+
+        private static void AssertValue(string expected, IDataValue value)
+        {
+            var val = Assert.IsType<DataValueSimple>(value);
             Assert.NotNull(val);
 
-            Assert.Equal(value, val.Value);
+            Assert.Equal(expected, val.Value);
         }
     }
 }

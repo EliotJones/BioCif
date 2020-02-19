@@ -39,6 +39,7 @@
             var state = new Stack<ParsingState>(new[] { ParsingState.None });
 
             var previous = default(Token);
+            var tokenBeforeNestedContext = default(Token);
             var lastName = default(DataName);
 
             var buffered = new BufferedStream(stream);
@@ -47,6 +48,7 @@
                 var activeBlock = default(DataBlockBuilder);
                 var activeLoop = default(LoopBuilder);
                 var listsStack = new Stack<List<IDataValue>>();
+                var dictionariesStack = new Stack<(string name, Dictionary<string, IDataValue> values)>();
 
                 foreach (var token in CifTokenizer.Tokenize(reader, options.Version))
                 {
@@ -57,52 +59,111 @@
                         case TokenType.Comment:
                             break;
                         case TokenType.DataBlock:
-                            if (activeLoop != null)
                             {
-                                activeBlock.Members.Add(activeLoop.Build());
-                                state.Pop();
-                            }
-                            if (activeBlock != null)
-                            {
-                                blocks.Add(activeBlock.Build());
-                                state.Pop();
-                            }
+                                if (activeLoop != null)
+                                {
+                                    activeBlock.Members.Add(activeLoop.Build());
+                                    state.Pop();
+                                }
 
-                            state.Push(ParsingState.InsideDataBlock);
+                                if (activeBlock != null)
+                                {
+                                    blocks.Add(activeBlock.Build());
+                                    state.Pop();
+                                }
 
-                            activeBlock = new DataBlockBuilder(token);
+                                state.Push(ParsingState.InsideDataBlock);
+
+                                activeBlock = new DataBlockBuilder(token);
+                            }
                             break;
                         case TokenType.Loop:
-                            if (activeLoop != null)
                             {
-                                activeBlock.Members.Add(activeLoop.Build());
-                                state.Pop();
-                            }
-                            
-                            activeLoop = new LoopBuilder();
-                            
-                            state.Push(ParsingState.InsideLoop);
+                                if (activeLoop != null)
+                                {
+                                    activeBlock.Members.Add(activeLoop.Build());
+                                    state.Pop();
+                                }
 
+                                activeLoop = new LoopBuilder();
+
+                                state.Push(ParsingState.InsideLoop);
+                            }
                             break;
                         case TokenType.StartList:
-                            state.Push(ParsingState.InsideList);
-                            listsStack.Push(new List<IDataValue>());
+                            {
+                                tokenBeforeNestedContext = previous;
+                                state.Push(ParsingState.InsideList);
+                                listsStack.Push(new List<IDataValue>());
+                            }
                             break;
                         case TokenType.EndList:
-                            state.Pop();
-                            var completed = listsStack.Pop();
-                            currentState = state.Peek();
-                            if (currentState == ParsingState.InsideLoopValues)
                             {
-                                activeLoop.AddToRow(new DataList(completed));
+                                if (currentState != ParsingState.InsideList)
+                                {
+                                    throw new InvalidOperationException($"Encountered end of list token when in state {currentState}. Previous token was {previous}.");
+                                }
+
+                                state.Pop();
+                                var completed = listsStack.Pop();
+                                var list = new DataList(completed);
+
+                                currentState = state.Peek();
+                                switch (currentState)
+                                {
+                                    case ParsingState.InsideLoopValues:
+                                        activeLoop.AddToRow(list);
+                                        break;
+                                    case ParsingState.InsideList:
+                                        listsStack.Peek().Add(list);
+                                        break;
+                                    case ParsingState.InsideTable:
+                                        dictionariesStack.Peek().values[tokenBeforeNestedContext.Value] = list;
+                                        break;
+                                    case ParsingState.InsideDataBlock:
+                                        activeBlock.Members.Add(new DataItem(lastName, list));
+                                        break;
+                                    default:
+                                        throw new InvalidOperationException($"List in unexpected context {completed} in {currentState}.");
+                                }
                             }
-                            else if (currentState == ParsingState.InsideList)
+                            break;
+                        case TokenType.StartTable:
                             {
-                                listsStack.Peek().Add(new DataList(completed));
+                                tokenBeforeNestedContext = previous;
+                                state.Push(ParsingState.InsideTable);
+                                dictionariesStack.Push((previous?.Value, new Dictionary<string, IDataValue>()));
                             }
-                            else if (currentState == ParsingState.InsideDataBlock)
+                            break;
+                        case TokenType.EndTable:
                             {
-                                activeBlock.Members.Add(new DataItem(lastName, new DataList(completed)));
+                                if (currentState != ParsingState.InsideTable)
+                                {
+                                    throw new InvalidOperationException($"Encountered end of table token when in state {currentState}. Previous token was {previous}.");
+                                }
+
+                                state.Pop();
+                                var completed = dictionariesStack.Pop();
+                                var dict = new DataDictionary(completed.values);
+                                currentState = state.Peek();
+
+                                switch (currentState)
+                                {
+                                    case ParsingState.InsideDataBlock:
+                                        activeBlock.Members.Add(new DataItem(lastName, dict));
+                                        break;
+                                    case ParsingState.InsideLoop:
+                                        activeLoop.AddToRow(dict);
+                                        break;
+                                    case ParsingState.InsideList:
+                                        listsStack.Peek().Add(dict);
+                                        break;
+                                    case ParsingState.InsideTable:
+                                        dictionariesStack.Peek().values[completed.name] = dict;
+                                        break;
+                                    default:
+                                        throw new ArgumentOutOfRangeException();
+                                }
                             }
                             break;
                         case TokenType.Value:
@@ -112,8 +173,8 @@
                                 {
                                     throw new InvalidOperationException();
                                 }
-                                
-                                activeBlock.Members.Add(new DataItem(new DataName(previous.Value), new DataValue(token.Value)));
+
+                                activeBlock.Members.Add(new DataItem(new DataName(previous.Value), new DataValueSimple(token.Value)));
                             }
                             else if (currentState == ParsingState.InsideLoop)
                             {
@@ -127,7 +188,7 @@
                             }
                             else if (currentState == ParsingState.InsideList)
                             {
-                                listsStack.Peek().Add(new DataValue(token.Value));
+                                listsStack.Peek().Add(new DataValueSimple(token.Value));
                             }
                             break;
                         case TokenType.Name:
@@ -148,7 +209,7 @@
                             break;
                         case TokenType.Unknown:
                             throw new InvalidOperationException($"Encountered unexpect token in CIF data: {token}.");
-                        
+
                     }
 
                     previous = token;
@@ -238,7 +299,7 @@
 
                 if (values.Count == 0)
                 {
-                    values.Add(new List<IDataValue> {new DataValue(token.Value)});
+                    values.Add(new List<IDataValue> { new DataValueSimple(token.Value) });
                 }
                 else
                 {
@@ -246,11 +307,11 @@
 
                     if (last.Count < headers.Count)
                     {
-                        last.Add(new DataValue(token.Value));
+                        last.Add(new DataValueSimple(token.Value));
                     }
                     else
                     {
-                        values.Add(new List<IDataValue> { new DataValue(token.Value) });
+                        values.Add(new List<IDataValue> { new DataValueSimple(token.Value) });
                     }
                 }
             }
