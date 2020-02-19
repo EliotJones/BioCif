@@ -49,6 +49,7 @@
                 var listsStack = new Stack<List<IDataValue>>();
                 var dictionariesStack = new Stack<(string name, Dictionary<string, IDataValue> values)>();
                 var kvpStack = new Stack<DictionaryPair>();
+                var activeSaveFrame = default(SaveFrameBuilder);
 
                 foreach (var token in CifTokenizer.Tokenize(reader, options.Version))
                 {
@@ -122,6 +123,9 @@
                                     case ParsingState.InsideDataBlock:
                                         activeBlock.Members.Add(new DataItem(lastName, list));
                                         break;
+                                    case ParsingState.InsideSaveFrame:
+                                        activeSaveFrame.Members.Add(new DataItem(lastName, list));
+                                        break;
                                     default:
                                         throw new InvalidOperationException($"List in unexpected context {completed} in {currentState}.");
                                 }
@@ -155,6 +159,9 @@
                                     case ParsingState.InsideDataBlock:
                                         activeBlock.Members.Add(new DataItem(lastName, dict));
                                         break;
+                                    case ParsingState.InsideSaveFrame:
+                                        activeSaveFrame.Members.Add(new DataItem(lastName, dict));
+                                        break;
                                     case ParsingState.InsideLoop:
                                         activeLoop.AddToRow(dict);
                                         break;
@@ -179,6 +186,14 @@
                                     }
 
                                     activeBlock.Members.Add(new DataItem(new DataName(previous.Value), new DataValueSimple(token.Value)));
+                                    break;
+                                case ParsingState.InsideSaveFrame:
+                                    if (previous?.TokenType != TokenType.Name)
+                                    {
+                                        throw new InvalidOperationException();
+                                    }
+
+                                    activeSaveFrame.Members.Add(new DataItem(new DataName(previous.Value), new DataValueSimple(token.Value)));
                                     break;
                                 case ParsingState.InsideLoop:
                                     state.Pop();
@@ -210,14 +225,62 @@
                             }
                             else if (currentState == ParsingState.InsideLoopValues)
                             {
-                                activeBlock.Members.Add(activeLoop.Build());
-                                activeLoop = null;
+                                if (activeLoop == null)
+                                {
+                                    throw new InvalidOperationException($"End of loop detected after token {previous} but no loop was active.");
+                                }
+
                                 state.Pop();
+                                var outer = state.Peek();
+
+                                if (outer == ParsingState.InsideDataBlock)
+                                {
+                                    activeBlock.Members.Add(activeLoop.Build());
+                                }
+                                else if (outer == ParsingState.InsideSaveFrame)
+                                {
+                                    activeSaveFrame.Members.Add(activeLoop.Build());
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException($"End of loop detected but outer state was: {outer}. Loops can only be inside data blocks and save frames.");
+                                }
+
+                                activeLoop = null;
                             }
                             else
                             {
                                 lastName = new DataName(token.Value);
                             }
+                            break;
+                        case TokenType.SaveFrame:
+                            if (activeSaveFrame != null)
+                            {
+                                throw new InvalidOperationException($"Encountered nested save frame with name {token.Value} inside {activeSaveFrame}.");
+                            }
+
+                            if (currentState != ParsingState.InsideDataBlock)
+                            {
+                                throw new InvalidOperationException($"Encountered save frame with name {token.Value} in wrong state: {currentState}. Only valid for {ParsingState.InsideDataBlock}.");
+                            }
+
+                            activeSaveFrame = new SaveFrameBuilder(token.Value.Substring(5));
+                            state.Push(ParsingState.InsideSaveFrame);
+                            break;
+                        case TokenType.SaveFrameEnd:
+                            if (currentState != ParsingState.InsideSaveFrame)
+                            {
+                                throw new InvalidOperationException($"Encountered end of save frame outside save frame. State was {currentState}, previous token was {previous}.");
+                            }
+
+                            if (activeSaveFrame == null)
+                            {
+                                throw new InvalidOperationException($"Encountered end of save frame with no active save frame.");
+                            }
+
+                            state.Pop();
+                            activeBlock.Members.Add(activeSaveFrame.Build());
+                            activeSaveFrame = null;
                             break;
                         case TokenType.Unknown:
                             throw new InvalidOperationException($"Encountered unexpect token in CIF data: {token}.");
@@ -364,6 +427,23 @@
                 }).ToList();
 
                 return new Table(names, rows);
+            }
+        }
+
+        private class SaveFrameBuilder
+        {
+            private readonly string name;
+
+            public List<IDataBlockMember> Members { get; } = new List<IDataBlockMember>();
+
+            public SaveFrameBuilder(string name)
+            {
+                this.name = name;
+            }
+
+            public SaveFrame Build()
+            {
+                return new SaveFrame(name, Members);
             }
         }
 

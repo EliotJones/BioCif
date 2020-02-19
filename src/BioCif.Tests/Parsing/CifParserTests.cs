@@ -270,6 +270,87 @@ _normalized yes";
         }
 
         [Fact]
+        public void ParsesSaveFrame()
+        {
+            const string input = @"data_dict
+save__atom_site.aniso_B[1][2]
+    _item_description.description
+;              The [1][2] element of the anisotropic atomic displacement
+               matrix B, which appears in the structure-factor term as:
+
+               T = exp{-1/4 sum~i~[sum~j~(B^ij^ h~i~ h~j~ a*~i~ a*~j~)]}
+
+               h  = the Miller indices
+               a* = the reciprocal space cell lengths
+
+               These matrix elements may appear with atomic coordinates
+               in the ATOM_SITE category, or they may appear in the separate
+               ATOM_SITE_ANISOTROP category, but they may not appear in both
+               places. Similarly, anisotropic displacements may appear as
+               either B's or U's, but not as both.
+
+               The unique elements of the real symmetric matrix are
+               entered by row.
+
+               The IUCr Commission on Nomenclature recommends against the use
+               of B for reporting atomic displacement parameters. U, being
+               directly proportional to B, is preferred.
+;
+    _item.name                  '_atom_site.aniso_B[1][2]'
+    _item.category_id             atom_site
+    _item.mandatory_code          no
+#    _item_default.value           0.0
+    _pdbx_item_description.name         ""_refine.aniso_B[1][2]""
+    _pdbx_item_description.description  ""The [1][2] element of the matrix that defines the overall anisotropic displacement model if one was refined for this structure""
+    loop_
+    _item_related.related_name
+    _item_related.function_code '_atom_site.aniso_B[1][2]_esd'
+                                  associated_esd
+                                '_atom_site.aniso_U[1][2]'
+                                  conversion_constant
+                                '_atom_site_anisotrop.U[1][2]'
+                                  conversion_constant
+                                '_atom_site.aniso_U[1][2]'
+                                  alternate_exclusive
+                                '_atom_site_anisotrop.B[1][2]'
+                                  alternate_exclusive
+                                '_atom_site_anisotrop.U[1][2]'
+                                  alternate_exclusive
+    _item_sub_category.id         matrix
+    _item_type.code               float
+    _item_type_conditions.code    esd
+    _item_units.code              8pi2_angstroms_squared
+     save_
+_count 7.65(9)";
+
+            var cif = Parse(input);
+
+            var block = Assert.Single(cif.DataBlocks);
+            Assert.NotNull(block);
+
+            Assert.Equal("dict", block.Name);
+
+            Assert.Equal(2, block.Count);
+
+            var frame = Assert.IsType<SaveFrame>(block[0]);
+
+            Assert.Equal("_atom_site.aniso_B[1][2]", frame.FrameCode);
+
+            AssertSimpleItem("item.name", "_atom_site.aniso_B[1][2]", frame[1]);
+            AssertSimpleItem("pdbx_item_description.description", 
+                "The [1][2] element of the matrix that defines the overall anisotropic displacement model if one was refined for this structure",
+                frame[5]);
+
+            var loop = Assert.IsType<Table>(frame[6]);
+            Assert.Equal(2, loop.Headers.Count);
+            Assert.Equal(6, loop.Rows.Count);
+
+            AssertSimpleItem("item_sub_category.id", "matrix", frame[7]);
+
+            AssertNamedValue("count", "7.65(9)", block);
+        }
+
+        [Fact]
         public void ParsesVanadiumHypophosphiteCifFile()
         {
             using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("1000118.cif")))
