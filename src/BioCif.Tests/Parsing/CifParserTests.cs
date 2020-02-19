@@ -158,6 +158,115 @@ _simple simple_value";
             Assert.NotNull(block);
 
             Assert.Equal(3, block.Count);
+
+            Assert.True(block.TryGet("dict", out DataDictionary dict));
+            Assert.Equal(3, dict.Count);
+            Assert.Equal("1", (DataValueSimple)dict["count"]);
+            Assert.Equal(" any", (DataValueSimple)dict["name"]);
+
+            var vectors = Assert.IsType<DataList>(dict["vectors"]);
+
+            Assert.Equal(5, vectors.Count);
+
+            var inner = Assert.IsType<DataList>(vectors[3]);
+
+            Assert.Equal(3, inner.Count);
+
+            Assert.True(block.TryGet("list", out DataList list));
+            Assert.Equal(3, list.Count);
+            AssertNamedValue("simple", "simple_value", block);
+        }
+
+        [Fact]
+        public void BlockContainingNestedDictionary()
+        {
+            const string input = @"data_block
+_dict {
+    'name': 'my top level'
+    'inner': {
+        'a': 1
+        'b': [ 1 5 7 ]
+    }
+    'result': pass
+}
+_simple value";
+
+            var cif = Parse(input);
+
+            var block = Assert.Single(cif.DataBlocks);
+            Assert.NotNull(block);
+
+            Assert.True(block.TryGet("dict", out DataDictionary dict));
+
+            Assert.Equal("my top level", (DataValueSimple)dict["name"]);
+            Assert.True(dict.TryGetValue("inner", out var innerAny));
+            var inner = (DataDictionary) innerAny;
+
+            Assert.Equal("1", (DataValueSimple)inner["a"]);
+            var bList = Assert.IsType<DataList>(inner["b"]);
+            Assert.Equal(3, bList.Count);
+
+            Assert.Equal("pass", (DataValueSimple)dict["result"]);
+
+            AssertNamedValue("simple", "value", block);
+        }
+
+        [Fact]
+        public void BlockContainingNestedNestedDictionaries()
+        {
+            const string input = @"data_nested
+_top {
+    'level 1': {
+        'item 1': happy
+        'level 2': {
+            'item 2': '''a text'''
+            'list': [ a b {
+                        'status': 'in list'
+                    } ]
+            'level 3': { 'item 3': 'babble' }
+        }
+    }
+    'any': 'cabbage'
+}
+_normalized yes";
+
+            var cif = Parse(input);
+
+            var block = Assert.Single(cif.DataBlocks);
+            Assert.NotNull(block);
+
+            Assert.Equal(2, block.Count);
+            AssertNamedValue("normalized", "yes", block);
+
+            Assert.True(block.TryGet("top", out DataDictionary top));
+
+            Assert.True(top.TryGetValue("level 1", out var level1Any));
+
+            var level1 = Assert.IsType<DataDictionary>(level1Any);
+
+            Assert.Equal("happy", (DataValueSimple)level1["item 1"]);
+
+            Assert.True(level1.TryGetValue("level 2", out var level2Any));
+
+            var level2 = Assert.IsType<DataDictionary>(level2Any);
+
+            Assert.Equal(3, level2.Count);
+
+            Assert.Equal("a text", (DataValueSimple)level2["item 2"]);
+
+            var list = Assert.IsType<DataList>(level2["list"]);
+
+            Assert.Equal(3, list.Count);
+
+            var listDict = Assert.IsType<DataDictionary>(list[2]);
+
+            Assert.Equal("in list", (DataValueSimple)listDict["status"]);
+
+            var level3 = Assert.IsType<DataDictionary>(level2["level 3"]);
+
+            Assert.Equal("babble", (DataValueSimple)level3["item 3"]);
+
+            Assert.Equal("cabbage", (DataValueSimple)top["any"]);
         }
 
         [Fact]
@@ -203,7 +312,6 @@ _simple simple_value";
                     "Amoros, P"
                 }, loop.Rows.Select(x => (x[0] as DataValueSimple)?.Value));
             }
-
         }
 
         [Fact]

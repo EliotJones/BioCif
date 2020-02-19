@@ -39,7 +39,6 @@
             var state = new Stack<ParsingState>(new[] { ParsingState.None });
 
             var previous = default(Token);
-            var tokenBeforeNestedContext = default(Token);
             var lastName = default(DataName);
 
             var buffered = new BufferedStream(stream);
@@ -49,6 +48,7 @@
                 var activeLoop = default(LoopBuilder);
                 var listsStack = new Stack<List<IDataValue>>();
                 var dictionariesStack = new Stack<(string name, Dictionary<string, IDataValue> values)>();
+                var kvpStack = new Stack<DictionaryPair>();
 
                 foreach (var token in CifTokenizer.Tokenize(reader, options.Version))
                 {
@@ -92,7 +92,6 @@
                             break;
                         case TokenType.StartList:
                             {
-                                tokenBeforeNestedContext = previous;
                                 state.Push(ParsingState.InsideList);
                                 listsStack.Push(new List<IDataValue>());
                             }
@@ -118,7 +117,7 @@
                                         listsStack.Peek().Add(list);
                                         break;
                                     case ParsingState.InsideTable:
-                                        dictionariesStack.Peek().values[tokenBeforeNestedContext.Value] = list;
+                                        dictionariesStack.Peek().values[kvpStack.Pop().Key.Value] = list;
                                         break;
                                     case ParsingState.InsideDataBlock:
                                         activeBlock.Members.Add(new DataItem(lastName, list));
@@ -130,7 +129,11 @@
                             break;
                         case TokenType.StartTable:
                             {
-                                tokenBeforeNestedContext = previous;
+                                if (kvpStack.Count > 0)
+                                {
+                                    kvpStack.Peek().IsOuterScope = true;
+                                }
+
                                 state.Push(ParsingState.InsideTable);
                                 dictionariesStack.Push((previous?.Value, new Dictionary<string, IDataValue>()));
                             }
@@ -167,28 +170,37 @@
                             }
                             break;
                         case TokenType.Value:
-                            if (currentState == ParsingState.InsideDataBlock)
+                            switch (currentState)
                             {
-                                if (previous?.TokenType != TokenType.Name)
-                                {
-                                    throw new InvalidOperationException();
-                                }
+                                case ParsingState.InsideDataBlock:
+                                    if (previous?.TokenType != TokenType.Name)
+                                    {
+                                        throw new InvalidOperationException();
+                                    }
 
-                                activeBlock.Members.Add(new DataItem(new DataName(previous.Value), new DataValueSimple(token.Value)));
-                            }
-                            else if (currentState == ParsingState.InsideLoop)
-                            {
-                                state.Pop();
-                                state.Push(ParsingState.InsideLoopValues);
-                                activeLoop.AddToRow(token);
-                            }
-                            else if (currentState == ParsingState.InsideLoopValues)
-                            {
-                                activeLoop.AddToRow(token);
-                            }
-                            else if (currentState == ParsingState.InsideList)
-                            {
-                                listsStack.Peek().Add(new DataValueSimple(token.Value));
+                                    activeBlock.Members.Add(new DataItem(new DataName(previous.Value), new DataValueSimple(token.Value)));
+                                    break;
+                                case ParsingState.InsideLoop:
+                                    state.Pop();
+                                    state.Push(ParsingState.InsideLoopValues);
+                                    activeLoop.AddToRow(token);
+                                    break;
+                                case ParsingState.InsideLoopValues:
+                                    activeLoop.AddToRow(token);
+                                    break;
+                                case ParsingState.InsideList:
+                                    listsStack.Peek().Add(new DataValueSimple(token.Value));
+                                    break;
+                                case ParsingState.InsideTable:
+                                    if (kvpStack.Count == 0 || kvpStack.Peek().IsOuterScope)
+                                    {
+                                        kvpStack.Push(new DictionaryPair { Key = token });
+                                        break;
+                                    }
+
+                                    var val = kvpStack.Pop();
+                                    dictionariesStack.Peek().values[val.Key.Value] = new DataValueSimple(token.Value);
+                                    break;
                             }
                             break;
                         case TokenType.Name:
@@ -355,7 +367,7 @@
             }
         }
 
-        public enum ParsingState
+        private enum ParsingState
         {
             None = 0,
             InsideDataBlock = 1,
@@ -364,6 +376,13 @@
             InsideTable = 4,
             InsideSaveFrame = 5,
             InsideLoopValues = 6
+        }
+
+        private class DictionaryPair
+        {
+            public Token Key { get; set; }
+
+            public bool IsOuterScope { get; set; }
         }
     }
 }
