@@ -1,5 +1,6 @@
 ﻿namespace BioCif.Tests.Parsing
 {
+    using System.IO;
     using System.Linq;
     using System.Text;
     using Core;
@@ -157,6 +158,29 @@ _simple simple_value";
             Assert.NotNull(block);
 
             Assert.Equal(3, block.Count);
+        }
+
+        [Fact]
+        public void ParserVanadiumHypophosphiteCifFile()
+        {
+            using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("1000118.cif")))
+            {
+                var cif = CifParser.Parse(fs);
+
+                var block = Assert.Single(cif.DataBlocks);
+                Assert.NotNull(block);
+
+                Assert.True(block.TryGet("publ_section_title", out DataValueSimple titleValue));
+                Assert.Equal("\nAb initio crystal structure determination of V O (H2 P O2) .(H2 O) from\n" +
+                             "X-ray and neutron powder diffraction data. A monodimensional\n" +
+                             "vanadium(IV) hypophosphite", titleValue);
+
+                Assert.True(block.TryGet("symmetry_cell_setting", out DataValueSimple symmetryCellSetting));
+                Assert.Equal("monoclinic", symmetryCellSetting);
+
+                Assert.True(block.TryGet("symmetry_space_group_name_Hall", out DataValueSimple hallSymmetryGroup));
+                Assert.Equal("-C 2yc", hallSymmetryGroup);
+            }
         }
 
         private static Cif Parse(string input)

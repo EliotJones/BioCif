@@ -35,6 +35,28 @@
             this.contents = contents ?? throw new ArgumentNullException(nameof(contents));
         }
 
+        public bool TryGet<T>(string name, out T value) where T : IDataValue => TryGet(new DataName(name), out value);
+        public bool TryGet<T>(DataName name, out T value) where T : IDataValue
+        {
+            value = default(T);
+
+            foreach (var content in contents)
+            {
+                if (!(content is DataItem item))
+                {
+                    continue;
+                }
+
+                if (item.Name.Equals(name) && item.Value is T result)
+                {
+                    value = result;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <inheritdoc />
         public IEnumerator<IDataBlockMember> GetEnumerator() => contents.GetEnumerator();
 
