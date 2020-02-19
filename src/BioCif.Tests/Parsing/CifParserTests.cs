@@ -161,7 +161,7 @@ _simple simple_value";
         }
 
         [Fact]
-        public void ParserVanadiumHypophosphiteCifFile()
+        public void ParsesVanadiumHypophosphiteCifFile()
         {
             using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("1000118.cif")))
             {
@@ -170,16 +170,76 @@ _simple simple_value";
                 var block = Assert.Single(cif.DataBlocks);
                 Assert.NotNull(block);
 
-                Assert.True(block.TryGet("publ_section_title", out DataValueSimple titleValue));
-                Assert.Equal("\nAb initio crystal structure determination of V O (H2 P O2) .(H2 O) from\n" +
+                AssertNamedValue("publ_section_title", "\nAb initio crystal structure determination of V O (H2 P O2) .(H2 O) from\n" +
                              "X-ray and neutron powder diffraction data. A monodimensional\n" +
-                             "vanadium(IV) hypophosphite", titleValue);
+                             "vanadium(IV) hypophosphite", block);
 
-                Assert.True(block.TryGet("symmetry_cell_setting", out DataValueSimple symmetryCellSetting));
-                Assert.Equal("monoclinic", symmetryCellSetting);
+                AssertNamedValue("symmetry_cell_setting", "monoclinic", block);
+                AssertNamedValue("symmetry_space_group_name_Hall", "-C 2yc", block);
+            }
+        }
 
-                Assert.True(block.TryGet("symmetry_space_group_name_Hall", out DataValueSimple hallSymmetryGroup));
-                Assert.Equal("-C 2yc", hallSymmetryGroup);
+        [Fact]
+        public void ParsesVanadiumHypophosphiteCifLoop()
+        {
+            using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("1000118.cif")))
+            {
+                var cif = CifParser.Parse(fs);
+
+                var block = Assert.Single(cif.DataBlocks);
+                Assert.NotNull(block);
+
+                var loop = Assert.IsType<Table>(block[0]);
+
+                var name = Assert.Single(loop.Headers);
+                Assert.Equal("publ_author_name", name);
+
+                Assert.Equal(3, loop.Rows.Count);
+
+                Assert.Equal(new[]
+                {
+                    "Le Bail, A",
+                    "Marcos, M D",
+                    "Amoros, P"
+                }, loop.Rows.Select(x => (x[0] as DataValueSimple)?.Value));
+            }
+
+        }
+
+        [Fact]
+        public void ParsesMsp1SubstrateComplexCifFile()
+        {
+            using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("6pdw.cif")))
+            {
+                var cif = CifParser.Parse(fs);
+
+                var block = Assert.Single(cif.DataBlocks);
+                Assert.NotNull(block);
+
+                AssertNamedValue("entry.id", "6PDW", block);
+                AssertNamedValue("pdbx_database_related.details", "Msp1-substrate complex in closed conformation", block);
+                AssertNamedValue("citation.title", "Structure of the AAA protein Msp1 reveals mechanism of mislocalized membrane protein extraction.", block);
+                AssertNamedValue("citation.year", "2020", block);
+                AssertNamedValue("citation.pdbx_database_id_DOI", "10.7554/eLife.54031", block);
+                AssertNamedValue("pdbx_struct_assembly_auth_evidence.experimental_support", "gel filtration", block);
+            }
+        }
+
+        [Fact]
+        public void ParsePhosphineSulfonatePalladiumNickelCatalyzedEthylenePolymerizationCif()
+        {
+            using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("1552310.cif")))
+            {
+                var cif = CifParser.Parse(fs);
+
+                var block = Assert.Single(cif.DataBlocks);
+                Assert.NotNull(block);
+
+                AssertNamedValue("publ_section_title", "\n Ligand--metal secondary interactions in phosphine--sulfonate palladium\n and nickel catalyzed ethylene (co)polymerization", block);
+                AssertNamedValue("audit_creation_method", "\nOlex2 1.2\n(compiled 2018.05.29 svn.r3508 for OlexSys, GUI svn.r5506)", block);
+
+                Assert.True(block.TryGet("platon_squeeze_details", out DataValueSimple platon));
+                Assert.EndsWith("Q199 0.139 0.473 0.234 !       0.87 eA-3", platon);
             }
         }
 
@@ -212,6 +272,12 @@ _simple simple_value";
             Assert.NotNull(val);
 
             Assert.Equal(expected, val.Value);
+        }
+
+        private static void AssertNamedValue(string name, string value, DataBlock block)
+        {
+            Assert.True(block.TryGet(name, out DataValueSimple val));
+            Assert.Equal(value, val);
         }
     }
 }
