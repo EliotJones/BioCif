@@ -5,4 +5,8 @@
     <IsTestProject>False</IsTestProject>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BioCif.Core\BioCif.Core.csproj" />
+  </ItemGroup>
+
 </Project>
