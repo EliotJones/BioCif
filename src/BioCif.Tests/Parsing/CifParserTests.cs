@@ -432,6 +432,36 @@ _count 7.65(9)";
             }
         }
 
+        [Fact]
+        public void ParseDifferentialCapMaturationGrowingMicrotubuleEnds()
+        {
+            using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("6s9e.cif")))
+            {
+                var cif = CifParser.Parse(fs);
+
+                var block = Assert.Single(cif.DataBlocks);
+                Assert.NotNull(block);
+
+                Assert.Equal("6S9E", block.Name);
+                AssertNamedValue("symmetry.entry_id", "6S9E", block);
+            }
+        }
+
+        [Fact]
+        public void ParseCrystalStructureUchucchacuaite()
+        {
+            using (var fs = File.OpenRead(GetIntegrationDocumentFilePath("9016727.cif")))
+            {
+                var cif = CifParser.Parse(fs);
+
+                var block = Assert.Single(cif.DataBlocks);
+                Assert.NotNull(block);
+
+                Assert.Equal("9016727", block.Name);
+                AssertNamedValue("cod_original_formula_sum", "Pb3 Mn.901 Ag1.049 Sb5.049 S12", block);
+            }
+        }
+
         private static Cif Parse(string input)
         {
             using (var sr = StringToStream(input))
