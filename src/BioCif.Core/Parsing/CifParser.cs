@@ -42,7 +42,7 @@
                 var activeBlock = default(DataBlockBuilder);
                 var activeLoop = default(LoopBuilder);
                 var listsStack = new Stack<List<IDataValue>>();
-                var dictionariesStack = new Stack<(string name, Dictionary<string, IDataValue> values)>();
+                var dictionariesStack = new Stack<DictionaryState>();
                 var kvpStack = new Stack<DictionaryPair>();
                 var activeSaveFrame = default(SaveFrameBuilder);
 
@@ -113,7 +113,7 @@
                                         listsStack.Peek().Add(list);
                                         break;
                                     case ParsingState.InsideTable:
-                                        dictionariesStack.Peek().values[kvpStack.Pop().Key.Value] = list;
+                                        dictionariesStack.Peek().Dictionary[kvpStack.Pop().Key.Value] = list;
                                         break;
                                     case ParsingState.InsideDataBlock:
                                         activeBlock.Members.Add(new DataItem(lastName, list));
@@ -134,7 +134,7 @@
                                 }
 
                                 state.Push(ParsingState.InsideTable);
-                                dictionariesStack.Push((previous?.Value, new Dictionary<string, IDataValue>()));
+                                dictionariesStack.Push(new DictionaryState(previous?.Value));
                             }
                             break;
                         case TokenType.EndTable:
@@ -146,7 +146,7 @@
 
                                 state.Pop();
                                 var completed = dictionariesStack.Pop();
-                                var dict = new DataDictionary(completed.values);
+                                var dict = new DataDictionary(completed.Dictionary);
                                 currentState = state.Peek();
 
                                 switch (currentState)
@@ -164,7 +164,7 @@
                                         listsStack.Peek().Add(dict);
                                         break;
                                     case ParsingState.InsideTable:
-                                        dictionariesStack.Peek().values[completed.name] = dict;
+                                        dictionariesStack.Peek().Dictionary[completed.Key] = dict;
                                         break;
                                     default:
                                         throw new ArgumentOutOfRangeException();
@@ -209,7 +209,7 @@
                                     }
 
                                     var val = kvpStack.Pop();
-                                    dictionariesStack.Peek().values[val.Key.Value] = new DataValueSimple(token.Value);
+                                    dictionariesStack.Peek().Dictionary[val.Key.Value] = new DataValueSimple(token.Value);
                                     break;
                             }
                             break;
@@ -453,6 +453,18 @@
             public Token Key { get; set; }
 
             public bool IsOuterScope { get; set; }
+        }
+
+        private class DictionaryState
+        {
+            public string Key { get; }
+
+            public Dictionary<string, IDataValue> Dictionary { get; } = new Dictionary<string, IDataValue>();
+
+            public DictionaryState(string key)
+            {
+                Key = key;
+            }
         }
     }
 }

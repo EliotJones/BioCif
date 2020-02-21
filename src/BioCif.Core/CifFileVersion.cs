@@ -17,6 +17,5 @@
         /// See: http://journals.iucr.org/j/issues/2016/01/00/aj5269/index.html.
         /// </summary>
         Version2 = 2
-
     }
 }
