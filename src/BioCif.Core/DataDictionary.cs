@@ -14,7 +14,7 @@
 
         /// <inheritdoc />
         public DataValueType DataType { get; } = DataValueType.Dictionary;
-
+        
         /// <inheritdoc />
         public int Count => values.Count;
 
@@ -40,6 +40,9 @@
         {
             this.values = values ?? throw new ArgumentNullException(nameof(values));
         }
+
+        /// <inheritdoc />
+        public string GetStringValue() => null;
 
         /// <inheritdoc />
         public IEnumerator<KeyValuePair<string, IDataValue>> GetEnumerator() => values.GetEnumerator();

@@ -10,6 +10,7 @@
     /// </summary>
     public class DataTable : IDataBlockMember
     {
+        private readonly IReadOnlyDictionary<string, int> nameColumnIndexMap;
         /// <summary>
         /// The headers for the table <see cref="Rows"/>.
         /// </summary>
@@ -43,6 +44,16 @@
 
             Headers = headers ?? throw new ArgumentNullException(nameof(headers));
             Rows = rowsActual;
+
+            var ncim = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            for (var i = 0; i < headers.Count; i++)
+            {
+                var header = headers[i];
+                ncim[header] = i;
+            }
+
+            nameColumnIndexMap = ncim;
         }
 
         /// <inheritdoc />
@@ -68,6 +79,28 @@
                 this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
                 this.values = values ?? throw new ArgumentNullException(nameof(values));
                 Count = values.Count;
+            }
+
+            /// <summary>
+            /// Get the value with the specified name for this row, or <see langword="null" />.
+            /// </summary>
+            public IDataValue GetOptional(DataName name) => GetOptional(name.Tag);
+            /// <summary>
+            /// Get the value with the specified name for this row, or <see langword="null" />.
+            /// </summary>
+            public IDataValue GetOptional(string name)
+            {
+                if (name == null)
+                {
+                    return null;
+                }
+
+                if (!parent.nameColumnIndexMap.TryGetValue(name, out var index))
+                {
+                    return null;
+                }
+
+                return values[index];
             }
 
             /// <inheritdoc />

@@ -10,5 +10,10 @@
         /// The type of this value.
         /// </summary>
         DataValueType DataType { get; }
+
+        /// <summary>
+        /// Gets the <see langword="string"/> value of this value if it's a <see cref="DataValueSimple"/>, <see langword="null"/> otherwise.
+        /// </summary>
+        string GetStringValue();
     }
 }

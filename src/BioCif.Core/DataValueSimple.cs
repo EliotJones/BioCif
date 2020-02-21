@@ -31,6 +31,9 @@
         }
 
         /// <inheritdoc />
+        public string GetStringValue() => Value;
+
+        /// <inheritdoc />
         public override bool Equals(object obj) => obj is DataValueSimple value && Value == value.Value;
 
         /// <inheritdoc />

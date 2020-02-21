@@ -29,11 +29,6 @@
             {
                 options = new CifParsingOptions();
             }
-            else if (options.FileEncoding == null)
-            {
-                options.FileEncoding = Encoding.UTF8;
-            }
-
             var blocks = new List<DataBlock>();
 
             var state = new Stack<ParsingState>(new[] { ParsingState.None });
@@ -42,7 +37,7 @@
             var lastName = default(DataName);
 
             var buffered = new BufferedStream(stream);
-            using (var reader = new StreamReader(buffered, options.FileEncoding))
+            using (var reader = options.FileEncoding != null ? new StreamReader(buffered, options.FileEncoding) : new StreamReader(buffered, Encoding.UTF8, true))
             {
                 var activeBlock = default(DataBlockBuilder);
                 var activeLoop = default(LoopBuilder);

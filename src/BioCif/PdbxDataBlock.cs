@@ -16,7 +16,7 @@
         /// <summary>
         /// Details about the author(s) of this data block.
         /// </summary>
-        public List<AuditAuthor> AuditAuthors { get; } = new List<AuditAuthor>();
+        public List<AuditAuthor> AuditAuthors { get; set; } = new List<AuditAuthor>();
 
         /// <summary>
         /// The citation from <see cref="AllCitations"/> which is considered to be most pertinent to this entry.
@@ -26,12 +26,12 @@
         /// <summary>
         /// All citations linked to this entry.
         /// </summary>
-        public List<Citation> AllCitations { get; } = new List<Citation>();
+        public List<Citation> AllCitations { get; set; } = new List<Citation>();
 
         /// <summary>
         /// All entities in this entry.
         /// </summary>
-        public List<Entity> Entities { get; } = new List<Entity>();
+        public List<Entity> Entities { get; set; } = new List<Entity>();
 
         /// <summary>
         /// Details about the space-group symmetry of this item.
