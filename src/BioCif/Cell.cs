@@ -5,6 +5,9 @@
     /// </summary>
     public class Cell
     {
-        public decimal? AngleAlpha { get; set; }
+        /// <summary>
+        /// Unit-cell angle alpha of the reported structure in degrees.
+        /// </summary>
+        public double? AngleAlpha { get; set; }
     }
 }
