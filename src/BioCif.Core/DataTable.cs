@@ -3,6 +3,7 @@
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Globalization;
 
     /// <inheritdoc />
     /// <summary>
@@ -118,6 +119,32 @@
             /// Gets the <see langword="int"/> value with the specified name for this row if it exists and can be parsed, or <see langword="null"/>.
             /// </summary>
             public int? GetOptionalInt(string name) => GetOptional(name)?.GetIntValue();
+
+            /// <summary>
+            /// Gets the <see langword="double"/> value with the specified name for this row if it exists and can be parsed, or <see langword="null"/>.
+            /// </summary>
+            public double? GetOptionalDouble(string name)
+            {
+                var str = GetOptionalString(name);
+
+                if (str == null)
+                {
+                    return null;
+                }
+
+                var bracket = str.IndexOf('(');
+                if (bracket > 0)
+                {
+                    str = str.Substring(0, bracket);
+                }
+
+                if (!double.TryParse(str, NumberStyles.Number, CultureInfo.InvariantCulture, out var result))
+                {
+                    return null;
+                }
+
+                return result;
+            }
 
             /// <inheritdoc />
             public IEnumerator<IDataValue> GetEnumerator() => values.GetEnumerator();

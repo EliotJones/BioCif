@@ -38,6 +38,8 @@
             Assert.Null(block.Symmetry.FullSpaceGroupNameHM);
             Assert.Null(block.Symmetry.SpaceGroupNameHall);
             Assert.Equal("P 1", block.Symmetry.SpaceGroupNameHM);
+
+            Assert.Equal(5, block.Entities.Count);
         }
     }
 }

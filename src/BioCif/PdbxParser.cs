@@ -64,6 +64,7 @@
                 {
                     EntryId = entryId,
                     AuditAuthors = GetAuditAuthors(cifDataBlock),
+                    Entities = GetEntities(cifDataBlock),
                     Raw = cifDataBlock,
                     Symmetry = GetSymmetry(cifDataBlock)
                 });
@@ -112,6 +113,40 @@
                 SpaceGroupNameHM = first.GetOptionalString(Symmetry.SpaceGroupNameHMFieldName),
                 SpaceGroupNameHall = first.GetOptionalString(Symmetry.SpaceGroupNameHallFieldName)
             };
+        }
+
+        private static List<Entity> GetEntities(DataBlock cifDataBlock)
+        {
+            var result = new List<Entity>();
+
+            var entityTable = cifDataBlock.GetTableForCategory(Entity.Category);
+
+            foreach (var row in entityTable.Rows)
+            {
+                var entity = new Entity
+                {
+                    Id = row.GetOptionalString(Entity.IdFieldName),
+                    Description = row.GetOptionalString(Entity.DescriptionFieldName),
+                    Details = row.GetOptionalString(Entity.DetailsFieldName),
+                    EnzymeCommission = row.GetOptionalString(Entity.EnzymeCommissionFieldName),
+                    EntitiesPerBiologicalUnit = row.GetOptionalDouble(Entity.EntitiesPerBiologicalUnitFieldName),
+                    ExperimentalFormulaWeight = row.GetOptionalDouble(Entity.EntitiesPerBiologicalUnitFieldName),
+                    ExperimentalFormulaWeightMethod = row.GetOptionalString(Entity.ExperimentalFormulaWeightMethodFieldName),
+                    FormulaWeight = row.GetOptionalDouble(Entity.FormulaWeightFieldName),
+                    Fragment = row.GetOptionalString(Entity.FragmentFieldName),
+                    Modification = row.GetOptionalString(Entity.ModificationFieldName),
+                    Mutation = row.GetOptionalString(Entity.MutationFieldName),
+                    NumberOfMolecules = row.GetOptionalInt(Entity.NumberOfMoleculesFieldName),
+                    ParentEntityId = row.GetOptionalString(Entity.ParentEntityIdFieldName),
+                    SourceMethodRaw = row.GetOptionalString(Entity.SourceMethodRawFieldName),
+                    TargetId = row.GetOptionalString(Entity.TargetIdFieldName),
+                    TypeRaw = row.GetOptionalString(Entity.TypeRawFieldName)
+                };
+
+                result.Add(entity);
+            }
+
+            return result;
         }
 
         private static string GetSimpleNamedValue(DataBlock cifDataBlock, string name)

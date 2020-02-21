@@ -37,6 +37,13 @@ To access the parsed CIF structure:
         }
     }
 
+To access a parsed PDBx/mmCIF:
+
+    Pdbx pdbx = PdbxParser.ParseFile(@"C:\path\to\mypdbx.cif");
+    PdbxDataBlock block = pdbx.First;
+    List<AuditAuthor> auditAuthors = block.AuditAuthors;
+
+
 ## Notes ##
 
 Defined terms from the CIF specification: 
@@ -63,7 +70,7 @@ Notes on structures within a CIF file:
 
 + Dictionary for PDBx/mmCIF data names: http://mmcif.wwpdb.org/dictionaries/mmcif_pdbx_v50.dic/Index/
 + CIF Version 1.1 specification: https://www.iucr.org/resources/cif/spec/version1.1/cifsyntax
-+ Search PDBx structures in the PDF: http://www.rcsb.org/pdb/results/results.do?tabtoshow=Current&qrid=D9207E13
++ Search PDBx structures in the PDB: https://www.rcsb.org/#Category-search
 + Existing C# tools for CIF format among others: https://github.com/mindleaving/genome-tools
 + CIF on Wikipedia: https://en.wikipedia.org/wiki/Crystallographic_Information_File
 + Crystallography Open Database of non-mmCIF CIF files:http://www.crystallography.net/cod/index.php

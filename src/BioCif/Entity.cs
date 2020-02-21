@@ -5,6 +5,77 @@
     /// </summary>
     public class Entity
     {
+        #region names
+        /// <summary>
+        /// Category name.
+        /// </summary>
+        public const string Category = "entity";
+        /// <summary>
+        /// Field name for <see cref="Id"/>.
+        /// </summary>
+        public const string IdFieldName = "entity.id";
+        /// <summary>
+        /// Field name for <see cref="Details"/>.
+        /// </summary>
+        public const string DetailsFieldName = "entity.details";
+        /// <summary>
+        /// Field name for <see cref="Description"/>.
+        /// </summary>
+        public const string DescriptionFieldName = "entity.pdbx_description";
+        /// <summary>
+        /// Field name for <see cref="EnzymeCommission"/>.
+        /// </summary>
+        public const string EnzymeCommissionFieldName = "entity.pdbx_ec";
+        /// <summary>
+        /// Field name for <see cref="FormulaWeight"/>.
+        /// </summary>
+        public const string FormulaWeightFieldName = "entity.formula_weight";
+        /// <summary>
+        /// Field name for <see cref="EntitiesPerBiologicalUnit"/>.
+        /// </summary>
+        public const string EntitiesPerBiologicalUnitFieldName = "entity.pdbx_entities_per_biological_unit";
+        /// <summary>
+        /// Field name for <see cref="ExperimentalFormulaWeight"/>.
+        /// </summary>
+        public const string ExperimentalFormulaWeightFieldName = "entity.pdbx_formula_weight_exptl";
+        /// <summary>
+        /// Field name for <see cref="ExperimentalFormulaWeightMethod"/>.
+        /// </summary>
+        public const string ExperimentalFormulaWeightMethodFieldName = "entity.pdbx_formula_weight_exptl_method";
+        /// <summary>
+        /// Field name for <see cref="Fragment"/>.
+        /// </summary>
+        public const string FragmentFieldName = "entity.pdbx_fragment";
+        /// <summary>
+        /// Field name for <see cref="Modification"/>.
+        /// </summary>
+        public const string ModificationFieldName = "entity.pdbx_modification";
+        /// <summary>
+        /// Field name for <see cref="Mutation"/>.
+        /// </summary>
+        public const string MutationFieldName = "entity.pdbx_mutation";
+        /// <summary>
+        /// Field name for <see cref="NumberOfMolecules"/>.
+        /// </summary>
+        public const string NumberOfMoleculesFieldName = "entity.pdbx_number_of_molecules";
+        /// <summary>
+        /// Field name for <see cref="ParentEntityId"/>.
+        /// </summary>
+        public const string ParentEntityIdFieldName = "entity.pdbx_parent_entity_id";
+        /// <summary>
+        /// Field name for <see cref="TargetId"/>.
+        /// </summary>
+        public const string TargetIdFieldName = "entity.pdbx_target_id";
+        /// <summary>
+        /// Field name for <see cref="SourceMethodRaw"/>.
+        /// </summary>
+        public const string SourceMethodRawFieldName = "entity.src_method";
+        /// <summary>
+        /// Field name for <see cref="TypeRaw"/>.
+        /// </summary>
+        public const string TypeRawFieldName = "entity.type";
+        #endregion
+
         /// <summary>
         /// Uniquely identifies this entity.
         /// </summary>
@@ -19,7 +90,7 @@
         /// Describes special aspects of the entity.
         /// </summary>
         public string Details { get; set; }
-        
+
         /// <summary>
         /// Formula mass in daltons.
         /// </summary>
@@ -54,6 +125,11 @@
         /// Description(s) of any chemical or post-translational modifications.
         /// </summary>
         public string Modification { get; set; }
+
+        /// <summary>
+        /// Details about any entity mutation(s).
+        /// </summary>
+        public string Mutation { get; set; }
 
         /// <summary>
         /// Placeholder for the number of molecules of the entity in the entry.
