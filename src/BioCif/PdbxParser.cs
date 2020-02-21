@@ -4,7 +4,6 @@
     using System.Text;
     using Core;
     using Core.Parsing;
-    using Version = Core.Version;
 
     /// <summary>
     /// Parse a <see cref="Pdbx"/> from a CIF file.
@@ -31,7 +30,7 @@
         {
             var cif = CifParser.Parse(stream, new CifParsingOptions
             {
-                Version = Version.Version2,
+                CifFileVersion = CifFileVersion.Version2,
                 FileEncoding = encoding
             });
 

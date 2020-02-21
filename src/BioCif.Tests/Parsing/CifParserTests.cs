@@ -54,7 +54,7 @@ _publ_author_name
 
             var content = Assert.Single(block);
 
-            var loop = Assert.IsType<Table>(content);
+            var loop = Assert.IsType<DataTable>(content);
 
             Assert.Equal(new[]{ "publ_author_name" }, loop.Headers.Select(x => x.Tag));
             Assert.Equal(new[] { "Le Bail, A", "Marcos, M D", "Amoros, P" }, loop.Rows.Select(x => ((DataValueSimple)x[0]).Value));
@@ -341,7 +341,7 @@ _count 7.65(9)";
                 "The [1][2] element of the matrix that defines the overall anisotropic displacement model if one was refined for this structure",
                 frame[5]);
 
-            var loop = Assert.IsType<Table>(frame[6]);
+            var loop = Assert.IsType<DataTable>(frame[6]);
             Assert.Equal(2, loop.Headers.Count);
             Assert.Equal(6, loop.Rows.Count);
 
@@ -379,7 +379,7 @@ _count 7.65(9)";
                 var block = Assert.Single(cif.DataBlocks);
                 Assert.NotNull(block);
 
-                var loop = Assert.IsType<Table>(block[0]);
+                var loop = Assert.IsType<DataTable>(block[0]);
 
                 var name = Assert.Single(loop.Headers);
                 Assert.Equal("publ_author_name", name);

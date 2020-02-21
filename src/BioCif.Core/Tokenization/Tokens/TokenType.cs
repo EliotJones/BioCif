@@ -38,19 +38,19 @@
         /// </summary>
         Comment = 7,
         /// <summary>
-        /// Marks the start of a list for <see cref="Version.Version2"/> CIF files.
+        /// Marks the start of a list for <see cref="CifFileVersion.Version2"/> CIF files.
         /// </summary>
         StartList = 8,
         /// <summary>
-        /// Marks the end of a list for <see cref="Version.Version2"/> CIF files.
+        /// Marks the end of a list for <see cref="CifFileVersion.Version2"/> CIF files.
         /// </summary>
         EndList = 9,
         /// <summary>
-        /// Marks the start of a table for <see cref="Version.Version2"/> CIF files.
+        /// Marks the start of a table for <see cref="CifFileVersion.Version2"/> CIF files.
         /// </summary>
         StartTable = 10,
         /// <summary>
-        /// Marks the end of a table for <see cref="Version.Version2"/> CIF files.
+        /// Marks the end of a table for <see cref="CifFileVersion.Version2"/> CIF files.
         /// </summary>
         EndTable = 11,
     }

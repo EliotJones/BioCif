@@ -35,7 +35,13 @@
             this.contents = contents ?? throw new ArgumentNullException(nameof(contents));
         }
 
+        /// <summary>
+        /// Gets the value associated with a name of the specific type if the data-block contains it.
+        /// </summary>
         public bool TryGet<T>(string name, out T value) where T : IDataValue => TryGet(new DataName(name), out value);
+        /// <summary>
+        /// Gets the value associated with a name of the specific type if the data-block contains it.
+        /// </summary>
         public bool TryGet<T>(DataName name, out T value) where T : IDataValue
         {
             value = default(T);

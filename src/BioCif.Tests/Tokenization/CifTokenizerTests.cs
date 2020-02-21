@@ -187,7 +187,7 @@ x,y,z";
         {
             const string input = "\"\"\"Cubic space group\"\"\"";
 
-            var tokens = StringToTokens(input, Version.Version1_1);
+            var tokens = StringToTokens(input, CifFileVersion.Version1_1);
 
             Assert.Single(tokens);
 
@@ -226,7 +226,7 @@ x,y,z";
         {
             const string input = "'''Unknown space group'''";
 
-            var tokens = StringToTokens(input, Version.Version1_1);
+            var tokens = StringToTokens(input, CifFileVersion.Version1_1);
 
             Assert.Single(tokens);
 
@@ -349,11 +349,11 @@ loop_";
             }
         }
 
-        private static IReadOnlyList<Token> StringToTokens(string input, Version version = Version.Version2)
+        private static IReadOnlyList<Token> StringToTokens(string input, CifFileVersion cifFileVersion = CifFileVersion.Version2)
         {
             using (var reader = StringToStreamReader(input))
             {
-                return CifTokenizer.Tokenize(reader, version).ToList();
+                return CifTokenizer.Tokenize(reader, cifFileVersion).ToList();
             }
         }
     }

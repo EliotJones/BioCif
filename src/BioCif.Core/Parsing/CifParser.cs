@@ -51,7 +51,7 @@
                 var kvpStack = new Stack<DictionaryPair>();
                 var activeSaveFrame = default(SaveFrameBuilder);
 
-                foreach (var token in CifTokenizer.Tokenize(reader, options.Version))
+                foreach (var token in CifTokenizer.Tokenize(reader, options.CifFileVersion))
                 {
                     var currentState = state.Peek();
 
@@ -417,16 +417,11 @@
                 }
             }
 
-            public Table Build()
+            public DataTable Build()
             {
                 var names = headers.Select(x => new DataName(x)).ToList();
-
-                var rows = values.Select(x => new TableRow
-                {
-                    Values = x
-                }).ToList();
-
-                return new Table(names, rows);
+                
+                return new DataTable(names, values);
             }
         }
 

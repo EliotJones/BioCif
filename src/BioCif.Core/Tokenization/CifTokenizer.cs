@@ -5,8 +5,11 @@
     using System.IO;
     using System.Text;
     using Tokens;
-    using Version = Version;
 
+    /// <summary>
+    /// Parse a file using the Crystallographic Information File (CIF) format.
+    /// The specification of the CIF format can be found here: https://www.iucr.org/resources/cif/spec.
+    /// </summary>
     public static class CifTokenizer
     {
         private const int Underscore = '_';
@@ -26,13 +29,16 @@
         private static readonly Token StartTableToken = new Token(TokenType.StartTable, "{");
         private static readonly Token EndTableToken = new Token(TokenType.EndTable, "}");
 
-        public static IEnumerable<Token> Tokenize(StreamReader streamReader, Version version = Version.Version2)
+        /// <summary>
+        /// Yields the set of tokens contained in the input CIF format stream.
+        /// </summary>
+        public static IEnumerable<Token> Tokenize(StreamReader streamReader, CifFileVersion cifFileVersion = CifFileVersion.Version2)
         {
             var sb = new StringBuilder();
 
             var scopes = new Stack<ActiveScope>(new[] { ActiveScope.BlockOrFrame });
 
-            while (Read(streamReader, sb, version, scopes.Peek(), out var tokenType, out var completeScope))
+            while (Read(streamReader, sb, cifFileVersion, scopes.Peek(), out var tokenType, out var completeScope))
             {
                 if (tokenType == TokenType.Loop)
                 {
@@ -86,7 +92,7 @@
             }
         }
 
-        private static bool Read(StreamReader sr, StringBuilder sb, Version version, ActiveScope scope, out TokenType type,
+        private static bool Read(StreamReader sr, StringBuilder sb, CifFileVersion cifFileVersion, ActiveScope scope, out TokenType type,
             out bool completeScope)
         {
             completeScope = false;
@@ -122,7 +128,7 @@
                 } while (IsEndline(val) || IsWhitespace(val));
             }
 
-            var ctx = GetTokenContext(val, sb, version);
+            var ctx = GetTokenContext(val, sb, cifFileVersion);
 
             switch (ctx)
             {
@@ -191,7 +197,7 @@
                     }
                 }
                 else if (ctx == Context.ReadingNonSimpleValueSingleQuote
-                         && version == Version.Version2
+                         && cifFileVersion == CifFileVersion.Version2
                          && previousPrevious == '\''
                          && previous == '\''
                          && val == '\'')
@@ -228,7 +234,7 @@
                     return true;
                 }
                 else if (ctx == Context.ReadingNonSimpleValueDoubleQuote
-                         && version == Version.Version2
+                         && cifFileVersion == CifFileVersion.Version2
                          && previousPrevious == '"'
                          && previous == '"'
                          && val == '"')
@@ -317,7 +323,7 @@
         /// </summary>
         private static bool IsWhitespaceOrEndFileOrLine(int val) => val < 0 || IsWhitespace(val) || IsEndline(val);
 
-        private static Context GetTokenContext(int val, StringBuilder sb, Version version)
+        private static Context GetTokenContext(int val, StringBuilder sb, CifFileVersion cifFileVersion)
         {
             Context ctx;
             switch (val)
@@ -339,7 +345,7 @@
                     break;
                 case OpenSquareBracket:
                     {
-                        if (version == Version.Version1_1)
+                        if (cifFileVersion == CifFileVersion.Version1_1)
                         {
                             throw new InvalidOperationException("Encountered a square bracket '[' at the start of a name or value when parsing CIF version 1 or 1.1.");
                         }
@@ -348,7 +354,7 @@
                     }
                 case OpenCurlyBracket:
                     {
-                        if (version == Version.Version1_1)
+                        if (cifFileVersion == CifFileVersion.Version1_1)
                         {
                             throw new InvalidOperationException("Encountered a curly bracket '{' at the start of a name or value when parsing CIF version 1 or 1.1.");
                         }

@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// A value associated with a <see cref="DataName"/> in a <see cref="DataItem"/>
-    /// or <see cref="Table"/>.
+    /// or <see cref="DataTable"/>.
     /// </summary>
     public interface IDataValue
     {

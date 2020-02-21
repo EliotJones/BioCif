@@ -12,22 +12,28 @@
     {
         private readonly IReadOnlyList<IDataBlockMember> members;
 
+        /// <inheritdoc />
         public int Count => members.Count;
 
+        /// <inheritdoc />
         public IDataBlockMember this[int index] => members[index];
 
+        /// <summary>
+        /// The name of this save frame excluding the 'save_' prefix.
+        /// </summary>
+        public string FrameCode { get; }
+
+        /// <summary>
+        /// Create a new <see cref="SaveFrame"/>.
+        /// </summary>
         public SaveFrame(string frameCode, IReadOnlyList<IDataBlockMember> members)
         {
             FrameCode = frameCode;
             this.members = members ?? throw new ArgumentNullException(nameof(members));
         }
-
-        /// <summary>
-        /// The name of this frame.
-        /// </summary>
-        public string FrameCode { get; }
-
+        /// <inheritdoc />
         public IEnumerator<IDataBlockMember> GetEnumerator() => members.GetEnumerator();
+        /// <inheritdoc />
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

@@ -15,12 +15,12 @@
         /// <summary>
         /// The version of the CIF specification the file uses.
         /// </summary>
-        public Version Version { get; set; } = Version.Version2;
+        public CifFileVersion CifFileVersion { get; set; } = CifFileVersion.Version2;
 
         /// <inheritdoc />
         public override string ToString()
         {
-            return $"Encoding: {FileEncoding}, Version: {Version}";
+            return $"Encoding: {FileEncoding}, Version: {CifFileVersion}";
         }
     }
 }
