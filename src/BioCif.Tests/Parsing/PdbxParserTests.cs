@@ -29,6 +29,15 @@
             }, block.AuditAuthors.Select(x => x.Name));
 
             Assert.NotNull(block.Raw);
+
+            Assert.NotNull(block.Symmetry);
+
+            Assert.Equal("6PDW", block.Symmetry.EntryId);
+            Assert.Null(block.Symmetry.CellSettingRaw);
+            Assert.Equal(1, block.Symmetry.TablesNumber);
+            Assert.Null(block.Symmetry.FullSpaceGroupNameHM);
+            Assert.Null(block.Symmetry.SpaceGroupNameHall);
+            Assert.Equal("P 1", block.Symmetry.SpaceGroupNameHM);
         }
     }
 }

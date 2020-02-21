@@ -1,6 +1,5 @@
 ﻿namespace BioCif.Core.Tokenization.Tokens
 {
-    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -14,7 +13,7 @@
         public TokenType TokenType { get; }
 
         /// <summary>
-        /// The text of this token.
+        /// The text of this token. Can be <see langword="null"/>.
         /// </summary>
         public string Value { get; }
 
@@ -24,7 +23,7 @@
         public Token(TokenType tokenType, string value)
         {
             TokenType = tokenType;
-            Value = value ?? throw new ArgumentNullException(nameof(value));
+            Value = value;
         }
 
         /// <inheritdoc />

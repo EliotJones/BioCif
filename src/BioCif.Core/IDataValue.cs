@@ -15,5 +15,10 @@
         /// Gets the <see langword="string"/> value of this value if it's a <see cref="DataValueSimple"/>, <see langword="null"/> otherwise.
         /// </summary>
         string GetStringValue();
+
+        /// <summary>
+        /// Gets the <see langword="int?"/> value of this value if it's a <see cref="DataValueSimple"/> which can be mapped to an int.
+        /// </summary>
+        int? GetIntValue();
     }
 }

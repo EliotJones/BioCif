@@ -17,6 +17,11 @@
         /// </summary>
         public CifFileVersion CifFileVersion { get; set; } = CifFileVersion.Version2;
 
+        /// <summary>
+        /// Sets a value to treat as equivalent to <see langword="null"/>.
+        /// </summary>
+        public string NullSymbol { get; set; } = "?";
+
         /// <inheritdoc />
         public override string ToString()
         {

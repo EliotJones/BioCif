@@ -43,6 +43,9 @@
 
         /// <inheritdoc />
         public string GetStringValue() => null;
+        
+        /// <inheritdoc />
+        public int? GetIntValue() => null;
 
         /// <inheritdoc />
         public IEnumerator<KeyValuePair<string, IDataValue>> GetEnumerator() => values.GetEnumerator();

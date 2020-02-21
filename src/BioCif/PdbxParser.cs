@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
     using System.IO;
     using System.Text;
     using Core;
@@ -65,7 +64,8 @@
                 {
                     EntryId = entryId,
                     AuditAuthors = GetAuditAuthors(cifDataBlock),
-                    Raw = cifDataBlock
+                    Raw = cifDataBlock,
+                    Symmetry = GetSymmetry(cifDataBlock)
                 });
             }
 
@@ -76,37 +76,42 @@
         {
             var result = new List<AuditAuthor>();
 
-            var auditAuthorsTable = cifDataBlock.GetTableForCategory("audit_author");
-
-            if (auditAuthorsTable == null)
-            {
-                return result;
-            }
-
+            var auditAuthorsTable = cifDataBlock.GetTableForCategory(AuditAuthor.Category);
+            
             foreach (var row in auditAuthorsTable.Rows)
             {
-                var ordinalRaw = row.GetOptional("audit_author.pdbx_ordinal");
-                var name = row.GetOptional("audit_author.name");
-                var orcid = row.GetOptional("audit_author.identifier_ORCID");
-                var address = row.GetOptional("audit_author.address");
-
-                var ordinal = result.Count;
-
-                if (int.TryParse(ordinalRaw?.GetStringValue(), NumberStyles.Number, CultureInfo.InvariantCulture, out var ordinalActual))
-                {
-                    ordinal = ordinalActual;
-                }
-
                 result.Add(new AuditAuthor
                 {
-                    Ordinal = ordinal,
-                    Name = name?.GetStringValue(),
-                    Orcid = orcid?.GetStringValue(),
-                    Address = address?.GetStringValue()
+                    Ordinal = row.GetOptionalInt(AuditAuthor.OrdinalFieldName).GetValueOrDefault(result.Count + 1),
+                    Name = row.GetOptionalString(AuditAuthor.NameFieldName),
+                    Orcid = row.GetOptionalString(AuditAuthor.OrcidFieldName),
+                    Address = row.GetOptionalString(AuditAuthor.AddressFieldName)
                 });
             }
 
             return result;
+        }
+
+        private static Symmetry GetSymmetry(DataBlock cifDataBlock)
+        {
+            var symmetryTable = cifDataBlock.GetTableForCategory(Symmetry.Category);
+
+            if (symmetryTable.Count == 0)
+            {
+                return new Symmetry();
+            }
+
+            var first = symmetryTable.Rows[0];
+
+            return new Symmetry
+            {
+                EntryId = first.GetOptionalString(Symmetry.EntryIdFieldName),
+                CellSettingRaw = first.GetOptionalString(Symmetry.CellSettingRawFieldName),
+                FullSpaceGroupNameHM = first.GetOptionalString(Symmetry.FullSpaceGroupNameHMFieldName),
+                TablesNumber = first.GetOptionalInt(Symmetry.TableNumberFieldName),
+                SpaceGroupNameHM = first.GetOptionalString(Symmetry.SpaceGroupNameHMFieldName),
+                SpaceGroupNameHall = first.GetOptionalString(Symmetry.SpaceGroupNameHallFieldName)
+            };
         }
 
         private static string GetSimpleNamedValue(DataBlock cifDataBlock, string name)
@@ -116,7 +121,7 @@
                 return null;
             }
 
-            return value.IsNullSymbol ? null : value.Value;
+            return value.Value;
         }
     }
 }

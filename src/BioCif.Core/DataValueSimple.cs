@@ -1,6 +1,6 @@
 ﻿namespace BioCif.Core
 {
-    using System;
+    using System.Globalization;
 
     /// <inheritdoc />
     /// <summary>
@@ -12,32 +12,37 @@
         public DataValueType DataType { get; } = DataValueType.Simple;
 
         /// <summary>
-        /// The raw <see langword="string"/> value from the file. 
+        /// The raw <see langword="string"/> value from the file. Can be <see langword="null"/>.
         /// </summary>
         public string Value { get; }
-
-        /// <summary>
-        /// Whether the <see cref="Value"/> is '?' which generally indicates a missing value.
-        /// </summary>
-        public bool IsNullSymbol { get; }
 
         /// <summary>
         /// Create a new <see cref="DataValueSimple"/>.
         /// </summary>
         public DataValueSimple(string value)
         {
-            Value = value ?? throw new ArgumentNullException(nameof(value));
-            IsNullSymbol = value == "?";
+            Value = value;
         }
 
         /// <inheritdoc />
         public string GetStringValue() => Value;
+        
+        /// <inheritdoc />
+        public int? GetIntValue()
+        {
+            if (int.TryParse(Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result))
+            {
+                return result;
+            }
+
+            return null;
+        }
 
         /// <inheritdoc />
         public override bool Equals(object obj) => obj is DataValueSimple value && Value == value.Value;
 
         /// <inheritdoc />
-        public override int GetHashCode() => Value.GetHashCode();
+        public override int GetHashCode() => Value != null ? Value.GetHashCode() : 0;
 
         /// <inheritdoc />
         public override string ToString() => Value;

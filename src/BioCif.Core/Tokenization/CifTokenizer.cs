@@ -28,11 +28,13 @@
         private static readonly Token EndListToken = new Token(TokenType.EndList, "]");
         private static readonly Token StartTableToken = new Token(TokenType.StartTable, "{");
         private static readonly Token EndTableToken = new Token(TokenType.EndTable, "}");
+        private static readonly Token NullToken = new Token(TokenType.Value, null);
 
         /// <summary>
         /// Yields the set of tokens contained in the input CIF format stream.
         /// </summary>
-        public static IEnumerable<Token> Tokenize(StreamReader streamReader, CifFileVersion cifFileVersion = CifFileVersion.Version2)
+        public static IEnumerable<Token> Tokenize(StreamReader streamReader, CifFileVersion cifFileVersion = CifFileVersion.Version2,
+            string nullValue = "?")
         {
             var sb = new StringBuilder();
 
@@ -40,52 +42,56 @@
 
             while (Read(streamReader, sb, cifFileVersion, scopes.Peek(), out var tokenType, out var completeScope))
             {
-                if (tokenType == TokenType.Loop)
+                switch (tokenType)
                 {
-                    yield return LoopToken;
-                }
-                else if (tokenType == TokenType.SaveFrameEnd)
-                {
-                    yield return SaveEndToken;
-                }
-                else if (tokenType == TokenType.StartList)
-                {
-                    yield return StartListToken;
-                    scopes.Push(ActiveScope.List);
-                }
-                else if (tokenType == TokenType.EndList)
-                {
-                    yield return EndListToken;
-                    scopes.Pop();
-                }
-                else if (tokenType == TokenType.StartTable)
-                {
-                    yield return StartTableToken;
-                    scopes.Push(ActiveScope.Table);
-                }
-                else if (tokenType == TokenType.EndTable)
-                {
-                    yield return EndTableToken;
-                    scopes.Pop();
-                }
-                else
-                {
-                    yield return new Token(tokenType, sb.ToString());
+                    case TokenType.Loop:
+                        yield return LoopToken;
+                        break;
+                    case TokenType.SaveFrameEnd:
+                        yield return SaveEndToken;
+                        break;
+                    case TokenType.StartList:
+                        yield return StartListToken;
+                        scopes.Push(ActiveScope.List);
+                        break;
+                    case TokenType.EndList:
+                        yield return EndListToken;
+                        scopes.Pop();
+                        break;
+                    case TokenType.StartTable:
+                        yield return StartTableToken;
+                        scopes.Push(ActiveScope.Table);
+                        break;
+                    case TokenType.EndTable:
+                        yield return EndTableToken;
+                        scopes.Pop();
+                        break;
+                    default:
 
-                    if (completeScope)
-                    {
-                        var completed = scopes.Pop();
-
-                        switch (completed)
+                        if (tokenType == TokenType.Value && nullValue != null && sb.ToString() == nullValue)
                         {
-                            case ActiveScope.List:
-                                yield return EndListToken;
-                                break;
-                            case ActiveScope.Table:
-                                yield return EndTableToken;
-                                break;
+                            yield return NullToken;
+                            break;
                         }
-                    }
+
+                        yield return new Token(tokenType, sb.ToString());
+
+                        if (completeScope)
+                        {
+                            var completed = scopes.Pop();
+
+                            switch (completed)
+                            {
+                                case ActiveScope.List:
+                                    yield return EndListToken;
+                                    break;
+                                case ActiveScope.Table:
+                                    yield return EndTableToken;
+                                    break;
+                            }
+                        }
+
+                        break;
                 }
 
                 sb.Clear();

@@ -35,6 +35,9 @@
         public string GetStringValue() => null;
 
         /// <inheritdoc />
+        public int? GetIntValue() => null;
+
+        /// <inheritdoc />
         public IEnumerator<IDataValue> GetEnumerator() => values.GetEnumerator();
 
         /// <inheritdoc />

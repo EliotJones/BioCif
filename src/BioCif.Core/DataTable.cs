@@ -22,6 +22,11 @@
         public IReadOnlyList<Row> Rows { get; }
 
         /// <summary>
+        /// The number of rows.
+        /// </summary>
+        public int Count { get; }
+
+        /// <summary>
         /// Create a new <see cref="DataTable"/>.
         /// </summary>
         public DataTable(IReadOnlyList<DataName> headers, IEnumerable<IReadOnlyList<IDataValue>> rows)
@@ -54,6 +59,7 @@
             }
 
             nameColumnIndexMap = ncim;
+            Count = Rows.Count;
         }
 
         /// <inheritdoc />
@@ -102,6 +108,16 @@
 
                 return values[index];
             }
+
+            /// <summary>
+            /// Gets the <see langword="string"/> value with the specified name for this row, or <see langword="null" />.
+            /// </summary>
+            public string GetOptionalString(string name) => GetOptional(name)?.GetStringValue();
+
+            /// <summary>
+            /// Gets the <see langword="int"/> value with the specified name for this row if it exists and can be parsed, or <see langword="null"/>.
+            /// </summary>
+            public int? GetOptionalInt(string name) => GetOptional(name)?.GetIntValue();
 
             /// <inheritdoc />
             public IEnumerator<IDataValue> GetEnumerator() => values.GetEnumerator();

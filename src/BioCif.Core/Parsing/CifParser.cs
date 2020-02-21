@@ -46,7 +46,7 @@
                 var kvpStack = new Stack<DictionaryPair>();
                 var activeSaveFrame = default(SaveFrameBuilder);
 
-                foreach (var token in CifTokenizer.Tokenize(reader, options.CifFileVersion))
+                foreach (var token in CifTokenizer.Tokenize(reader, options.CifFileVersion, options.NullSymbol))
                 {
                     var currentState = state.Peek();
 

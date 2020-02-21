@@ -6,9 +6,38 @@
     public class Symmetry
     {
         /// <summary>
+        /// Category name.
+        /// </summary>
+        public const string Category = @"symmetry";
+        /// <summary>
+        /// Field name for <see cref="EntryId"/>.
+        /// </summary>
+        public const string EntryIdFieldName = "symmetry.entry_id";
+        /// <summary>
+        /// Field name for <see cref="TablesNumber"/>.
+        /// </summary>
+        public const string TableNumberFieldName = "symmetry.Int_Tables_number";
+        /// <summary>
+        /// Field name for <see cref="CellSettingRaw"/>.
+        /// </summary>
+        public const string CellSettingRawFieldName = "symmetry.cell_setting";
+        /// <summary>
+        /// Field name for <see cref="FullSpaceGroupNameHM"/>.
+        /// </summary>
+        public const string FullSpaceGroupNameHMFieldName = "symmetry.pdbx_full_space_group_name_H-M";
+        /// <summary>
+        /// Field name for <see cref="SpaceGroupNameHM"/>.
+        /// </summary>
+        public const string SpaceGroupNameHMFieldName = "symmetry.space_group_name_H-M";
+        /// <summary>
+        /// Field name for <see cref="SpaceGroupNameHall"/>.
+        /// </summary>
+        public const string SpaceGroupNameHallFieldName = "symmetry.space_group_name_Hall";
+
+        /// <summary>
         /// A pointer to <see cref="PdbxDataBlock.EntryId"/>.
         /// </summary>
-        public string Id { get; set; }
+        public string EntryId { get; set; }
 
         /// <summary>
         /// Space-group number from International Tables for Crystallography.
@@ -23,7 +52,33 @@
         /// <summary>
         /// The <see cref="CellSettingRaw"/> mapped to the <see cref="CellSettings"/> enum.
         /// </summary>
-        public CellSettings CellSetting { get; set; }
+        public CellSettings CellSetting
+        {
+            get
+            {
+                switch (CellSettingRaw?.ToLowerInvariant())
+                {
+                    case "cubic":
+                        return CellSettings.Cubic;
+                    case "hexagonal":
+                        return CellSettings.Hexagonal;
+                    case "monoclinic":
+                        return CellSettings.Monoclinic;
+                    case "orthorhombic":
+                        return CellSettings.Orthorhombic;
+                    case "rhombohedral":
+                        return CellSettings.Rhombohedral;
+                    case "tetragonal":
+                        return CellSettings.Tetragonal;
+                    case "triclinic":
+                        return CellSettings.Triclinic;
+                    case "trigonal":
+                        return CellSettings.Trigonal;
+                    default:
+                        return CellSettings.Unknown;
+                }
+            }
+        }
 
         /// <summary>
         /// Used for PDB space group.
