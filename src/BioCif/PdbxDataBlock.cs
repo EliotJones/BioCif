@@ -34,6 +34,11 @@
         public List<Entity> Entities { get; set; } = new List<Entity>();
 
         /// <summary>
+        /// All chemical components used in this entry.
+        /// </summary>
+        public List<ChemicalComponent> ChemicalComponents { get; set; } = new List<ChemicalComponent>();
+
+        /// <summary>
         /// Details about the space-group symmetry of this item.
         /// </summary>
         public Symmetry Symmetry { get; set; }

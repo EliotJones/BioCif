@@ -66,6 +66,7 @@
                     EntryId = entryId,
                     AuditAuthors = GetAuditAuthors(cifDataBlock),
                     Entities = GetEntities(cifDataBlock),
+                    ChemicalComponents = GetChemicalComponents(cifDataBlock),
                     Raw = cifDataBlock,
                     Symmetry = GetSymmetry(cifDataBlock)
                 });
@@ -251,6 +252,29 @@
                 }
 
                 result.Add(entity);
+            }
+
+            return result;
+        }
+
+        private static List<ChemicalComponent> GetChemicalComponents(DataBlock cifDataBlock)
+        {
+            var result = new List<ChemicalComponent>();
+
+            var components = cifDataBlock.GetTableForCategory(ChemicalComponent.Category);
+
+            foreach (var row in components.Rows)
+            {
+                result.Add(new ChemicalComponent
+                {
+                    Id = row.GetOptionalString(ChemicalComponent.IdFieldName),
+                    Formula = row.GetOptionalString(ChemicalComponent.FormulaFieldName),
+                    FormulaWeight = row.GetOptionalDouble(ChemicalComponent.FormulaWeightFieldName),
+                    Name = row.GetOptionalString(ChemicalComponent.NameFieldName),
+                    Type = row.GetOptionalString(ChemicalComponent.TypeFieldName),
+                    IsStandardMonomer = row.GetOptionalBool(ChemicalComponent.IsStandardMonomerFieldName).GetValueOrDefault(true),
+                    Synonyms = row.GetOptionalString(ChemicalComponent.SynonymsFieldName)
+                });
             }
 
             return result;
