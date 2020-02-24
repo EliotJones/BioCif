@@ -120,7 +120,7 @@
         /// Specifies the sequence of monomers in a polymer.
         /// Allowance is made for the possibility of microheterogeneity in a sample by allowing a given sequence number to be correlated with more than one monomer ID.
         /// </summary>
-        public List<PolymerSequenceItem> Sequence { get; } = new List<PolymerSequenceItem>();
+        public List<PolymerSequenceItem> Sequence { get; set; } = new List<PolymerSequenceItem>();
  
         /// <summary>
         /// The type of polymer.

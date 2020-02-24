@@ -116,23 +116,97 @@
             };
         }
 
+        private static List<PolySeqItem> GetPolySeqItems(DataBlock cifDataBlock, out Dictionary<string, ushort> entityIdLookup)
+        {
+            var monIdPool = new Dictionary<string, string>();
+            entityIdLookup = new Dictionary<string, ushort>(StringComparer.OrdinalIgnoreCase);
+
+            var seqTable = cifDataBlock.GetTableForCategory(PolymerSequenceItem.Category);
+
+            var result = new List<PolySeqItem>();
+
+            ushort counter = 0;
+            foreach (var row in seqTable.Rows)
+            {
+                var entityId = row.GetOptionalString(PolymerSequenceItem.EntityIdFieldName);
+
+                if (entityId == null)
+                {
+                    continue;
+                }
+
+                if (!entityIdLookup.TryGetValue(entityId, out var key))
+                {
+                    key = counter++;
+                    entityIdLookup[entityId] = key;
+                }
+
+                var num = row.GetOptionalInt(PolymerSequenceItem.NumberFieldName);
+                var monId = row.GetOptionalString(PolymerSequenceItem.ChemicalComponentIdFieldName);
+
+                if (num == null || monId == null)
+                {
+                    continue;
+                }
+
+                if (!monIdPool.TryGetValue(monId, out var stored))
+                {
+                    stored = monId;
+                    monIdPool[stored] = stored;
+                }
+
+                result.Add(new PolySeqItem
+                {
+                    EntityId = key,
+                    Hetero = row.GetOptionalBool(PolymerSequenceItem.HeterogeneousFieldName).GetValueOrDefault(),
+                    MonId = stored,
+                    Num = num.Value
+                });
+            }
+
+            return result;
+        }
+
         private static List<EntityPolymer> GetPolymerEntities(DataBlock cifDataBlock)
         {
+            var polySeqItems = GetPolySeqItems(cifDataBlock, out var entityIdLookup);
+
             var result = new List<EntityPolymer>();
             var polyEntityTable = cifDataBlock.GetTableForCategory(EntityPolymer.Category);
 
             foreach (var row in polyEntityTable.Rows)
             {
+                var entityId = row.GetOptionalString(EntityPolymer.EntityIdFieldName);
+
+                if (entityId == null)
+                {
+                    continue;
+                }
+
+                var sequenceItems = new List<PolymerSequenceItem>();
+
+                if (entityIdLookup.TryGetValue(entityId, out var seqkey))
+                {
+                    sequenceItems.AddRange(polySeqItems.Where(x => x.EntityId == seqkey)
+                        .OrderBy(x => x.Num)
+                        .Select((x, i) => new PolymerSequenceItem
+                        {
+                            ChemicalComponentId = x.MonId,
+                            Heterogeneous = x.Hetero
+                        }));
+                }
+
                 result.Add(new EntityPolymer
                 {
-                    EntityId = row.GetOptionalString(EntityPolymer.EntityIdFieldName),
+                    EntityId = entityId,
                     NonStandardMonomer = row.GetOptionalBool(EntityPolymer.NonStandardMonomerFieldName).GetValueOrDefault(),
                     NonStandardLinkage = row.GetOptionalBool(EntityPolymer.NonStandardLinkageFieldName).GetValueOrDefault(),
-                    SequenceOneLetterCode = row.GetOptionalString(EntityPolymer.SequenceOneLetterCodeFieldName),
+                    SequenceOneLetterCode = row.GetOptionalString(EntityPolymer.SequenceOneLetterCodeFieldName)?.Replace("\r", string.Empty).Replace("\n", string.Empty),
                     SequenceOneLetterCodeCanonical = row.GetOptionalString(EntityPolymer.SequenceOneLetterCodeCanonicalFieldName),
                     StrandId = row.GetOptionalString(EntityPolymer.StrandIdFieldName),
                     TargetIdentifier = row.GetOptionalString(EntityPolymer.TargetIdentifierFieldName),
                     TypeRaw = row.GetOptionalString(EntityPolymer.TypeRawFieldName),
+                    Sequence = sequenceItems
                 });
             }
 
@@ -190,6 +264,17 @@
             }
 
             return value.Value;
+        }
+
+        private struct PolySeqItem
+        {
+            public ushort EntityId { get; set; }
+
+            public string MonId { get; set; }
+
+            public int Num { get; set; }
+
+            public bool Hetero { get; set; }
         }
     }
 }

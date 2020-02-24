@@ -46,13 +46,19 @@
             Assert.Equal(42599.152, first.FormulaWeight);
 
             Assert.NotNull(first.Polymer);
-            Assert.Equal(@"GSIAPYLVKIIDPDYEKNERTRIKAQENLRRIRRKQIAEKGDNEDGTDDPSRRRKIDDLVLNEYENQVALEVVAPEDIPV
-GFNDIGGLDDIIEELKETIIYPLTMPHLYKHGGALLAAPSGVLLYGPPGCGKTMLAKAVAHESGASFINLHISTLTEKWY
-GDSNKIVRAVFSLAKKLQPSIIFIDEIDAVLGTRRSGEHEASGMVKAEFMTLWDGLTSTNASGVPNRIVVLGATNRINDI
-DEAILRRMPKQFPVPLPGLEQRRRILELVLRGTKRDPDFDLDYIARVTAGMSGSDIKETCRDAAMAPMREYIRQHRASGK
-PLSEINPDDVRGIRTEDFFGRRGGKILSEIPPRQTGYVVQSKNSSEGGYEEVEDDDEQGTAST", first.Polymer.SequenceOneLetterCode);
+            Assert.Equal(@"GSIAPYLVKIIDPDYEKNERTRIKAQENLRRIRRKQIAEKGDNEDGTDDPSRRRKIDDLVLNEYENQVALEVVAPEDIPV" +
+                         "GFNDIGGLDDIIEELKETIIYPLTMPHLYKHGGALLAAPSGVLLYGPPGCGKTMLAKAVAHESGASFINLHISTLTEKWY" +
+                         "GDSNKIVRAVFSLAKKLQPSIIFIDEIDAVLGTRRSGEHEASGMVKAEFMTLWDGLTSTNASGVPNRIVVLGATNRINDI" +
+                         "DEAILRRMPKQFPVPLPGLEQRRRILELVLRGTKRDPDFDLDYIARVTAGMSGSDIKETCRDAAMAPMREYIRQHRASGK" +
+                         "PLSEINPDDVRGIRTEDFFGRRGGKILSEIPPRQTGYVVQSKNSSEGGYEEVEDDDEQGTAST", first.Polymer.SequenceOneLetterCode);
             Assert.Equal(EntityPolymer.PolymerType.PolypeptideL, first.Polymer.Type);
             Assert.Equal("B,C,D,E,F", first.Polymer.StrandId);
+
+            Assert.Equal(383, first.Polymer.Sequence.Count);
+            Assert.Equal("GLY", first.Polymer.Sequence[0].ChemicalComponentId);
+            Assert.False(first.Polymer.Sequence[0].Heterogeneous);
+            Assert.Equal("ARG", first.Polymer.Sequence[52].ChemicalComponentId);
+            Assert.False(first.Polymer.Sequence[52].Heterogeneous);
 
             Assert.NotNull(block.Entities[1].Polymer);
             Assert.Null(block.Entities[2].Polymer);
