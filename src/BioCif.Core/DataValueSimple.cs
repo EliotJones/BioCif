@@ -1,5 +1,6 @@
 ﻿namespace BioCif.Core
 {
+    using System;
     using System.Globalization;
 
     /// <inheritdoc />
@@ -33,6 +34,53 @@
             if (int.TryParse(Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result))
             {
                 return result;
+            }
+
+            return null;
+        }
+
+        /// <inheritdoc />
+        public double? GetDoubleValue()
+        {
+            if (Value == null)
+            {
+                return null;
+            }
+
+            var str = Value;
+
+            var bracket = Value.IndexOf('(');
+            if (bracket > 0)
+            {
+                str = str.Substring(0, bracket);
+            }
+
+            if (!double.TryParse(str, NumberStyles.Number, CultureInfo.InvariantCulture, out var result))
+            {
+                return null;
+            }
+
+            return result;
+        }
+
+        /// <inheritdoc />
+        public bool? GetBoolValue()
+        {
+            if (Value == null)
+            {
+                return null;
+            }
+
+            if (string.Equals(Value, "n", StringComparison.OrdinalIgnoreCase) || string.Equals(Value, "no", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(Value, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (string.Equals(Value, "y", StringComparison.OrdinalIgnoreCase) || string.Equals(Value, "yes", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(Value, "true", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
             }
 
             return null;

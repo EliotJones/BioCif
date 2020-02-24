@@ -38,6 +38,12 @@
         public int? GetIntValue() => null;
 
         /// <inheritdoc />
+        public double? GetDoubleValue() => null;
+
+        /// <inheritdoc />
+        public bool? GetBoolValue() => null;
+
+        /// <inheritdoc />
         public IEnumerator<IDataValue> GetEnumerator() => values.GetEnumerator();
 
         /// <inheritdoc />
@@ -46,7 +52,7 @@
         /// <inheritdoc />
         public override string ToString()
         {
-            var list = string.Join(" ", this.values.Select(x => x.ToString()));
+            var list = string.Join(" ", values.Select(x => x.ToString()));
             return $"[ {list} ]";
         }
     }

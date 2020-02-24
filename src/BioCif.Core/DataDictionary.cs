@@ -48,6 +48,12 @@
         public int? GetIntValue() => null;
 
         /// <inheritdoc />
+        public double? GetDoubleValue() => null;
+
+        /// <inheritdoc />
+        public bool? GetBoolValue() => null;
+
+        /// <inheritdoc />
         public IEnumerator<KeyValuePair<string, IDataValue>> GetEnumerator() => values.GetEnumerator();
 
         /// <inheritdoc />

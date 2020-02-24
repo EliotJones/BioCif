@@ -40,6 +40,22 @@
             Assert.Equal("P 1", block.Symmetry.SpaceGroupNameHM);
 
             Assert.Equal(5, block.Entities.Count);
+
+            var first = block.Entities[0];
+            Assert.Equal(Entity.EntityType.Polymer, first.Type);
+            Assert.Equal(42599.152, first.FormulaWeight);
+
+            Assert.NotNull(first.Polymer);
+            Assert.Equal(@"GSIAPYLVKIIDPDYEKNERTRIKAQENLRRIRRKQIAEKGDNEDGTDDPSRRRKIDDLVLNEYENQVALEVVAPEDIPV
+GFNDIGGLDDIIEELKETIIYPLTMPHLYKHGGALLAAPSGVLLYGPPGCGKTMLAKAVAHESGASFINLHISTLTEKWY
+GDSNKIVRAVFSLAKKLQPSIIFIDEIDAVLGTRRSGEHEASGMVKAEFMTLWDGLTSTNASGVPNRIVVLGATNRINDI
+DEAILRRMPKQFPVPLPGLEQRRRILELVLRGTKRDPDFDLDYIARVTAGMSGSDIKETCRDAAMAPMREYIRQHRASGK
+PLSEINPDDVRGIRTEDFFGRRGGKILSEIPPRQTGYVVQSKNSSEGGYEEVEDDDEQGTAST", first.Polymer.SequenceOneLetterCode);
+            Assert.Equal(EntityPolymer.PolymerType.PolypeptideL, first.Polymer.Type);
+            Assert.Equal("B,C,D,E,F", first.Polymer.StrandId);
+
+            Assert.NotNull(block.Entities[1].Polymer);
+            Assert.Null(block.Entities[2].Polymer);
         }
     }
 }

@@ -20,5 +20,15 @@
         /// Gets the <see langword="int?"/> value of this value if it's a <see cref="DataValueSimple"/> which can be mapped to an int.
         /// </summary>
         int? GetIntValue();
+
+        /// <summary>
+        /// Gets the <see langword="double?"/> value of this value if it's a <see cref="DataValueSimple"/> which can be mapped to an double.
+        /// </summary>
+        double? GetDoubleValue();
+
+        /// <summary>
+        /// Gets the <see langword="bool?"/> value of this value if it's a <see cref="DataValueSimple"/> which can be mapped to an bool.
+        /// </summary>
+        bool? GetBoolValue();
     }
 }

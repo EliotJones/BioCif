@@ -154,7 +154,23 @@
         /// <summary>
         /// The value of <see cref="SourceMethodRaw"/> mapped to the <see cref="Source"/> enum.
         /// </summary>
-        public Source SourceMethod { get; set; }
+        public Source SourceMethod
+        {
+            get
+            {
+                switch (SourceMethodRaw?.ToLowerInvariant())
+                {
+                    case "man":
+                        return Source.Manipulated;
+                    case "nat":
+                        return Source.Natural;
+                    case "syn":
+                        return Source.Synthetic;
+                    default:
+                        return Source.Unknown;
+                }
+            }
+        }
 
         /// <summary>
         /// Points to a TARGETDB target idenitifier from which this entity was generated.
@@ -172,7 +188,27 @@
         /// <summary>
         /// The value of <see cref="TypeRaw"/> mapped to the <see cref="EntityType"/> enum.
         /// </summary>
-        public EntityType Type { get; set; }
+        public EntityType Type
+        {
+            get
+            {
+                switch (TypeRaw?.ToLowerInvariant())
+                {
+                    case "branched":
+                        return EntityType.Branched;
+                    case "macrolide":
+                        return EntityType.Macrolide;
+                    case "non-polymer":
+                        return EntityType.NonPolymer;
+                    case "polymer":
+                        return EntityType.Polymer;
+                    case "water":
+                        return EntityType.Water;
+                    default:
+                        return EntityType.Unknown;
+                }
+            }
+        }
 
         /// <summary>
         /// Details of the polymer if the <see cref="Type"/> is <see cref="EntityType.Polymer"/>.

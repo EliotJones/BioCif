@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Text;
     using Core;
     using Core.Parsing;
@@ -115,11 +116,36 @@
             };
         }
 
+        private static List<EntityPolymer> GetPolymerEntities(DataBlock cifDataBlock)
+        {
+            var result = new List<EntityPolymer>();
+            var polyEntityTable = cifDataBlock.GetTableForCategory(EntityPolymer.Category);
+
+            foreach (var row in polyEntityTable.Rows)
+            {
+                result.Add(new EntityPolymer
+                {
+                    EntityId = row.GetOptionalString(EntityPolymer.EntityIdFieldName),
+                    NonStandardMonomer = row.GetOptionalBool(EntityPolymer.NonStandardMonomerFieldName).GetValueOrDefault(),
+                    NonStandardLinkage = row.GetOptionalBool(EntityPolymer.NonStandardLinkageFieldName).GetValueOrDefault(),
+                    SequenceOneLetterCode = row.GetOptionalString(EntityPolymer.SequenceOneLetterCodeFieldName),
+                    SequenceOneLetterCodeCanonical = row.GetOptionalString(EntityPolymer.SequenceOneLetterCodeCanonicalFieldName),
+                    StrandId = row.GetOptionalString(EntityPolymer.StrandIdFieldName),
+                    TargetIdentifier = row.GetOptionalString(EntityPolymer.TargetIdentifierFieldName),
+                    TypeRaw = row.GetOptionalString(EntityPolymer.TypeRawFieldName),
+                });
+            }
+
+            return result;
+        }
+
         private static List<Entity> GetEntities(DataBlock cifDataBlock)
         {
             var result = new List<Entity>();
 
             var entityTable = cifDataBlock.GetTableForCategory(Entity.Category);
+
+            var polymers = GetPolymerEntities(cifDataBlock);
 
             foreach (var row in entityTable.Rows)
             {
@@ -142,6 +168,13 @@
                     TargetId = row.GetOptionalString(Entity.TargetIdFieldName),
                     TypeRaw = row.GetOptionalString(Entity.TypeRawFieldName)
                 };
+
+                if (entity.Type == Entity.EntityType.Polymer)
+                {
+                    var match = polymers.FirstOrDefault(x => x.EntityId == entity.Id);
+
+                    entity.Polymer = match;
+                }
 
                 result.Add(entity);
             }
