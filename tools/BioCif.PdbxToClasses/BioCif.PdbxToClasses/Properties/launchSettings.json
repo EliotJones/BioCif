@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BioCif.PdbxToClasses": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Temp\\mmcif_pdbx_v50.dic\""
+    }
+  }
+}

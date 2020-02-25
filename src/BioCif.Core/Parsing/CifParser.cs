@@ -254,7 +254,26 @@
                                 throw new InvalidOperationException($"Encountered nested save frame with name {token.Value} inside {activeSaveFrame}.");
                             }
 
-                            if (currentState != ParsingState.InsideDataBlock)
+                            if (currentState == ParsingState.InsideLoopValues)
+                            {
+                                state.Pop();
+                                var outer = state.Peek();
+
+                                switch (outer)
+                                {
+                                    case ParsingState.InsideDataBlock:
+                                        activeBlock.Members.Add(activeLoop.Build());
+                                        break;
+                                    case ParsingState.InsideSaveFrame:
+                                        activeSaveFrame.Members.Add(activeLoop.Build());
+                                        break;
+                                    default:
+                                        throw new InvalidOperationException($"End of loop detected as save frame but outer state was: {outer}.");
+                                }
+
+                                activeLoop = null;
+                            }
+                            else if (currentState != ParsingState.InsideDataBlock)
                             {
                                 throw new InvalidOperationException($"Encountered save frame with name {token.Value} in wrong state: {currentState}. Only valid for {ParsingState.InsideDataBlock}.");
                             }
@@ -263,7 +282,26 @@
                             state.Push(ParsingState.InsideSaveFrame);
                             break;
                         case TokenType.SaveFrameEnd:
-                            if (currentState != ParsingState.InsideSaveFrame)
+                            if (currentState == ParsingState.InsideLoopValues)
+                            {
+                                state.Pop();
+                                var outer = state.Peek();
+
+                                switch (outer)
+                                {
+                                    case ParsingState.InsideDataBlock:
+                                        activeBlock.Members.Add(activeLoop.Build());
+                                        break;
+                                    case ParsingState.InsideSaveFrame:
+                                        activeSaveFrame.Members.Add(activeLoop.Build());
+                                        break;
+                                    default:
+                                        throw new InvalidOperationException($"End of loop detected as save frame but outer state was: {outer}.");
+                                }
+
+                                activeLoop = null;
+                            }
+                            else if (currentState != ParsingState.InsideSaveFrame)
                             {
                                 throw new InvalidOperationException($"Encountered end of save frame outside save frame. State was {currentState}, previous token was {previous}.");
                             }
