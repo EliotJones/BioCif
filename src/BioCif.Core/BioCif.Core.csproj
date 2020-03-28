@@ -6,18 +6,23 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Authors>EliotJones</Authors>
     <Company />
-    <Version>1.0.0-beta001</Version>
+    <Version>0.9.0</Version>
     <Description>Parses and tokenizes Crystallographic Information File (CIF) files from the Crystallographic Information Framework such as PDBx/mmCIF files used by the protein data bank (PDB). This package contains the core parser, tokenizer and data types used by any CIF file including the crystallographic open database (COD).
 
 For more on the CIF see: https://www.iucr.org/resources/cif</Description>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl>https://raw.githubusercontent.com/EliotJones/BioCif/master/icon.png</PackageIconUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/EliotJones/BioCif</PackageProjectUrl>
     <RepositoryUrl>https://github.com/EliotJones/BioCif</RepositoryUrl>
-    <PackageTags>PDBx mmCIF CIF Crystallographic Protein-Data-Bank</PackageTags>
+    <PackageTags>PDBx mmCIF CIF Crystallographic Protein-Data-Bank crystallographic-open-database COD</PackageTags>
     <RepositoryType>git</RepositoryType>
 
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <None Include="..\..\icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
 
 </Project>
